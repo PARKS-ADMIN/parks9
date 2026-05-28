@@ -360,8 +360,71 @@ function updateStats(){
 function pick(id){
   const si=selIdx(id);
   if(si>=0){sels=sels.filter(x=>x!==id);}
-  else{sels=[id];} // 단일 선택만
+  else{sels=[id];}
   selM=1;renderMap();updatePanel();
+  // 모바일: 바텀시트 열기
+  if(window.innerWidth<=860 && sels.length>0) openMobileSheet(sels[0]);
+}
+
+function openMobileSheet(id){
+  const st=UNIT_STATUS[id]||'avail';
+  const isAvail=st==='avail';
+  const stTxt=isAvail?'🟢 이용가능':'🔵 사용중';
+  const stColor=isAvail?'#16a34a':'#1e40af';
+
+  // 헤더 제목
+  document.getElementById('shttl').innerHTML=
+    `<span style="font-family:'Space Mono',monospace">${id}</span>&nbsp;
+     <span style="font-size:12px;font-weight:600;color:${stColor}">${stTxt}</span>`;
+
+  // 바텀시트 본문
+  let b='';
+
+  // 이용가능이면 전화/문자 버튼 크게
+  if(isAvail){
+    b+=`<div style="font-size:13px;color:#555;line-height:1.8;margin-bottom:14px">
+          이용 가능한 창고입니다.<br>문의/예약은 아래 연락처로 해주세요.
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:20px">
+          <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--navy);color:#fff;padding:14px;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none">📞 전화문의</a>
+          <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#16a34a;color:#fff;padding:14px;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none">💬 문자문의</a>
+        </div>`;
+  } else {
+    b+=`<div style="background:#eff6ff;border-radius:9px;padding:11px 13px;margin-bottom:16px;font-size:13px;color:#1e40af;">
+          현재 사용 중인 창고입니다.
+        </div>`;
+  }
+
+  // 이용 안내
+  b+=`<div style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.1em;margin-bottom:8px">이용 안내</div>
+      <div style="background:#f7f9fd;border-radius:10px;padding:4px 12px;margin-bottom:16px">
+        ${[['📹','CCTV 24시간 녹화 운영'],['🔑','스마트폰 원격 출입 (24시간)'],['🌡️','항온항습 자동 유지'],['🚗','방문 차량 30분 무료 주차'],['🚭','실내 금연 · 애완동물 입장 불가'],['📞','고객센터 010-6464-1666']]
+          .map(([ic,tx])=>`<div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid #eef;font-size:13px"><span>${ic}</span><span>${tx}</span></div>`)
+          .join('')}
+      </div>`;
+
+  // 창고 타입 안내 (간략)
+  b+=`<div style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.1em;margin-bottom:8px">창고 타입 & 요금</div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px">
+        ${[['하프룸','90×90×100cm','29,000'],['원룸','90×90×210cm','59,000'],['투룸','180×90×210cm','99,000'],['쓰리룸','270×90×210cm','139,000'],['포룸','360×90×210cm','189,000']]
+          .map(([nm,sz,pr])=>`<div style="display:flex;justify-content:space-between;align-items:center;background:#f8f9fc;border-radius:8px;padding:8px 12px;font-size:12.5px">
+            <span style="font-weight:700;color:#1a2870">${nm}</span>
+            <span style="color:#777">${sz}</span>
+            <span style="font-weight:700;color:var(--navy)">${pr}원~</span>
+          </div>`)
+          .join('')}
+      </div>`;
+
+  // 하단 문의 버튼
+  b+=`<div style="display:flex;gap:10px;padding-bottom:8px">
+        <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--navy);color:#fff;padding:13px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none">📞 전화문의</a>
+        <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:#16a34a;color:#fff;padding:13px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none">💬 문자문의</a>
+      </div>`;
+
+  document.getElementById('shbody').innerHTML=b;
+  document.getElementById('ov').classList.add('on');
+  document.getElementById('sheet').classList.add('on');
+  document.body.style.overflow='hidden';
 }
 function clearSel(){sels=[];selM=1;renderMap();updatePanel();}
 function setMode(m,btn){
