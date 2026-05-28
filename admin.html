@@ -12,6 +12,7 @@ const ADMIN_PW='0100';
   document.addEventListener('DOMContentLoaded',function(){
     document.body.style.display='none';
     const ov=document.createElement('div');
+    ov.id='login-overlay';
     ov.style.cssText='position:fixed;inset:0;background:#0f1420;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:"Noto Sans KR",sans-serif';
     ov.innerHTML=`<div style="background:#1e2230;border-radius:16px;padding:36px 32px;width:320px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5)">
       <div style="font-size:32px;margin-bottom:12px">🔐</div>
@@ -30,7 +31,7 @@ const ADMIN_PW='0100';
 })();
 function chkPW(){
   const v=document.getElementById('pwi').value;
-  if(v===ADMIN_PW){sessionStorage.setItem('parks_auth',ADMIN_PW);document.querySelector('div[style*="position:fixed"]').remove();}
+  if(v===ADMIN_PW){sessionStorage.setItem('parks_auth',ADMIN_PW);document.getElementById('login-overlay').remove();}
   else{document.getElementById('pwe').style.display='block';document.getElementById('pwi').value='';document.getElementById('pwi').focus();}
 }
 </script>
