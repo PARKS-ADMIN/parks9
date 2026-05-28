@@ -113,6 +113,22 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 .sh-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
 .sh-ttl{font-size:16px;font-weight:800}
 .sh-x{width:30px;height:30px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:#666;border:none}
+/* PRICE MODAL */
+.price-modal-ov{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+.price-modal-ov.on{display:flex;align-items:center;justify-content:center}
+.price-modal{background:#fff;border-radius:16px;width:min(540px,95vw);max-height:90dvh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+.pm-head{background:var(--navy);color:#fff;padding:18px 20px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1}
+.pm-head h2{font-size:16px;font-weight:900}
+.pm-x{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.pm-body{padding:16px}
+.pm-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.pm-tbl th{background:#f59e0b;color:#1a2870;font-weight:800;padding:9px 10px;text-align:center;border:1px solid #e0d0a0}
+.pm-tbl td{padding:8px 10px;border:1px solid #e8e8e8;text-align:center;vertical-align:middle}
+.pm-tbl tr:nth-child(even) td{background:#fafafa}
+.pm-type{font-weight:900;font-size:13px;color:#1a2870}
+.pm-sub{font-size:9px;color:#aaa;font-weight:400;display:block;margin-top:1px}
+.pm-price{font-weight:700;color:#111;font-family:'Space Mono',monospace}
+.pm-bank{background:#f0f4ff;border-radius:10px;padding:13px 16px;margin-top:14px;display:flex;align-items:center;gap:10px;font-size:13px}
 </style>
 </head>
 <body>
@@ -121,16 +137,74 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
     <div class="hd-ico">📦</div>
     <div><div class="hd-txt">무인셀프창고 파크스</div><div class="hd-sub">PARKS SELF STORAGE</div></div>
   </div>
-  <div><a href="tel:010-6464-1666" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;font-family:'Noto Sans KR',sans-serif">📞 010-6464-1666</a></div>
+  <div style="display:flex;gap:7px;align-items:center">
+    <button onclick="openPriceModal()" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">💰 요금안내</button>
+    <a href="tel:010-6464-1666" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;font-family:'Noto Sans KR',sans-serif">📞 010-6464-1666</a>
+  </div>
+</div>
+
+<!-- 요금 안내 모달 -->
+<div class="price-modal-ov" id="price-modal-ov" onclick="if(event.target===this)closePriceModal()">
+  <div class="price-modal">
+    <div class="pm-head">
+      <h2>💰 무인셀프창고 파크스 요금</h2>
+      <button class="pm-x" onclick="closePriceModal()">✕</button>
+    </div>
+    <div class="pm-body">
+      <table class="pm-tbl">
+        <thead>
+          <tr>
+            <th style="width:70px">구분</th>
+            <th>사이즈</th>
+            <th style="width:62px">기간</th>
+            <th style="width:90px">요금</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td rowspan="4" class="pm-type">하프룸<span class="pm-sub">Half Unit</span></td><td rowspan="4" style="font-size:12px;color:#555">90×90×100cm</td><td>1개월</td><td class="pm-price">₩29,000</td></tr>
+          <tr><td>3개월</td><td class="pm-price">₩78,000</td></tr>
+          <tr><td>6개월</td><td class="pm-price">₩139,000</td></tr>
+          <tr><td>12개월</td><td class="pm-price">₩244,000</td></tr>
+          <tr><td rowspan="4" class="pm-type">원룸<span class="pm-sub">Single Unit</span></td><td rowspan="4" style="font-size:12px;color:#555">90×90×210cm</td><td>1개월</td><td class="pm-price">₩59,000</td></tr>
+          <tr><td>3개월</td><td class="pm-price">₩159,000</td></tr>
+          <tr><td>6개월</td><td class="pm-price">₩283,000</td></tr>
+          <tr><td>12개월</td><td class="pm-price">₩496,000</td></tr>
+          <tr><td rowspan="4" class="pm-type">투룸<span class="pm-sub">Double Unit</span></td><td rowspan="4" style="font-size:12px;color:#555">180×90×210cm<br><span style="font-size:10px;color:#7c3aed">원룸 2칸 격벽 제거</span></td><td>1개월</td><td class="pm-price">₩99,000</td></tr>
+          <tr><td>3개월</td><td class="pm-price">₩267,000</td></tr>
+          <tr><td>6개월</td><td class="pm-price">₩475,000</td></tr>
+          <tr><td>12개월</td><td class="pm-price">₩832,000</td></tr>
+          <tr><td rowspan="4" class="pm-type">쓰리룸<span class="pm-sub">Triple Unit</span></td><td rowspan="4" style="font-size:12px;color:#555">270×90×210cm<br><span style="font-size:10px;color:#d97706">원룸 3칸 격벽 제거</span></td><td>1개월</td><td class="pm-price">₩139,000</td></tr>
+          <tr><td>3개월</td><td class="pm-price">₩375,000</td></tr>
+          <tr><td>6개월</td><td class="pm-price">₩667,000</td></tr>
+          <tr><td>12개월</td><td class="pm-price">₩1,165,000</td></tr>
+          <tr><td rowspan="4" class="pm-type">포룸<span class="pm-sub">Quad Unit</span></td><td rowspan="4" style="font-size:12px;color:#555">180×180×210cm<br>360×90×210cm<br><span style="font-size:10px;color:#dc2626">원룸 4칸 격벽 제거</span></td><td>1개월</td><td class="pm-price">₩189,000</td></tr>
+          <tr><td>3개월</td><td class="pm-price">₩510,000</td></tr>
+          <tr><td>6개월</td><td class="pm-price">₩907,000</td></tr>
+          <tr><td>12개월</td><td class="pm-price">₩1,588,000</td></tr>
+        </tbody>
+      </table>
+      <div class="pm-bank">
+        <span style="font-size:20px">🏦</span>
+        <div>
+          <div style="font-weight:800;color:#1a2870;font-size:13px">신한은행 100-037-408875</div>
+          <div style="font-size:11px;color:#666;margin-top:2px">예금주 : (주)파크스</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--navy);color:#fff;padding:11px;border-radius:9px;font-size:13px;font-weight:700;text-decoration:none">📞 전화문의</a>
+        <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:#16a34a;color:#fff;padding:11px;border-radius:9px;font-size:13px;font-weight:700;text-decoration:none">💬 문자문의</a>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="stats">
   <div class="st"><div class="sv" id="sa">—</div><div class="sl">이용가능</div></div>
-  <div class="st"><div class="sv" id="so">—</div><div class="sl">사용중</div></div>
-  <div class="st"><div class="sv" id="sr">—</div><div class="sl">점유율</div></div>
   <div class="st"><div class="sv" style="color:#38bdf8">29,000</div><div class="sl">하프룸~</div></div>
   <div class="st"><div class="sv" style="color:#22c55e">59,000</div><div class="sl">원룸~</div></div>
   <div class="st"><div class="sv" style="color:#f59e0b">99,000</div><div class="sl">투룸~</div></div>
+  <div class="st"><div class="sv" style="color:#a78bfa">139,000</div><div class="sl">쓰리룸~</div></div>
+  <div class="st"><div class="sv" style="color:#f87171">189,000</div><div class="sl">포룸~</div></div>
 </div>
 
 <!-- 확인용 안내 배너 -->
@@ -400,8 +474,6 @@ function updateStats(){
   IROW.forEach(id=>all.push(id));
   const occ=all.filter(id=>isOcc(id)).length;
   document.getElementById('sa').textContent=all.length-occ;
-  document.getElementById('so').textContent=occ;
-  document.getElementById('sr').textContent=Math.round(occ/all.length*100)+'%';
 }
 
 // ── 선택 ───────────────────────────────────────
@@ -536,6 +608,8 @@ function updatePanel(){
     </div>`;
 }
 function closeSh(){document.getElementById('ov').classList.remove('on');document.getElementById('sheet').classList.remove('on');document.body.style.overflow='';}
+function openPriceModal(){document.getElementById('price-modal-ov').classList.add('on');document.body.style.overflow='hidden';}
+function closePriceModal(){document.getElementById('price-modal-ov').classList.remove('on');document.body.style.overflow='';}
 function doRsv(){alert('로그인 후 예약이 완료됩니다.\n\n창고: '+sels.join(', ')+'\n타입: '+TL[mode]);}
 
 // CSS — dim
