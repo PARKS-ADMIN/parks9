@@ -146,8 +146,8 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 </div>
 
 <div class="legend">
-  <span class="leg"><span class="lc" style="background:var(--avail-bg);border:1px solid #86efac"></span>이용가능</span>
-  <span class="leg"><span class="lc" style="background:var(--occ-bg);border:1px solid #93c5fd"></span>사용중</span>
+  <span class="leg"><span class="lc" style="background:var(--avail-bg);border:1px solid #4ade80"></span>이용가능</span>
+  <span class="leg"><span class="lc" style="background:var(--occ-bg);border:1px solid #60a5fa"></span>사용중</span>
   <span class="leg"><span class="lc" style="background:var(--pillar)"></span>기둥</span>
 </div>
 
@@ -182,68 +182,13 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
     <button class="btn-rsv" onclick="doRsv()">지금 예약하기 →</button>
   </div>
   <div class="pc">
-    <div class="pct">창고 타입 안내</div>
-    <div style="display:flex;flex-direction:column;gap:6px">
-
-      <div style="background:#f8f9fc;border-radius:8px;border:1px solid #e8ecf6;padding:9px 11px;display:flex;align-items:center;gap:10px">
-        <div style="width:36px;height:36px;background:#dcfce7;border:1.5px solid #86efac;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:900;color:#15803d;text-align:center;line-height:1.2">하프<br>룸</div>
-        <div>
-          <div style="font-size:12px;font-weight:800;color:#111">하프룸 <span style="font-size:10px;color:#aaa;font-weight:400">Half Unit</span></div>
-          <div style="font-size:10.5px;color:#555;margin-top:2px">90 × 90 × 100cm</div>
-          <div style="font-size:10px;color:#888;margin-top:1px">소형 짐 보관에 적합</div>
-        </div>
-        <div style="margin-left:auto;font-size:11px;font-weight:700;color:var(--navy)">29,000원~</div>
-      </div>
-
-      <div style="background:#f8f9fc;border-radius:8px;border:1px solid #e8ecf6;padding:9px 11px;display:flex;align-items:center;gap:10px">
-        <div style="width:36px;height:36px;background:#dbeafe;border:1.5px solid #93c5fd;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:900;color:#1e40af;text-align:center;line-height:1.2">원<br>룸</div>
-        <div>
-          <div style="font-size:12px;font-weight:800;color:#111">원룸 <span style="font-size:10px;color:#aaa;font-weight:400">Single Unit</span></div>
-          <div style="font-size:10.5px;color:#555;margin-top:2px">90 × 90 × 210cm</div>
-          <div style="font-size:10px;color:#888;margin-top:1px">1칸 독립 보관</div>
-        </div>
-        <div style="margin-left:auto;font-size:11px;font-weight:700;color:var(--navy)">59,000원~</div>
-      </div>
-
-      <div style="background:#f8f9fc;border-radius:8px;border:1px solid #e8ecf6;padding:9px 11px;display:flex;align-items:center;gap:10px">
-        <div style="width:36px;height:36px;background:#ede9fe;border:1.5px solid #c4b5fd;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:900;color:#6d28d9;text-align:center;line-height:1.2">투<br>룸</div>
-        <div>
-          <div style="font-size:12px;font-weight:800;color:#111">투룸 <span style="font-size:10px;color:#aaa;font-weight:400">Double Unit</span></div>
-          <div style="font-size:10.5px;color:#555;margin-top:2px">180 × 90 × 210cm</div>
-          <div style="font-size:10px;color:#888;margin-top:1px">원룸 2칸 격벽 제거 사용</div>
-        </div>
-        <div style="margin-left:auto;font-size:11px;font-weight:700;color:var(--navy)">99,000원~</div>
-      </div>
-
-      <div style="background:#f8f9fc;border-radius:8px;border:1px solid #e8ecf6;padding:9px 11px;display:flex;align-items:center;gap:10px">
-        <div style="width:36px;height:36px;background:#fef3c7;border:1.5px solid #fde68a;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:900;color:#92400e;text-align:center;line-height:1.2">쓰리<br>룸</div>
-        <div>
-          <div style="font-size:12px;font-weight:800;color:#111">쓰리룸 <span style="font-size:10px;color:#aaa;font-weight:400">Triple Unit</span></div>
-          <div style="font-size:10.5px;color:#555;margin-top:2px">270 × 90 × 210cm</div>
-          <div style="font-size:10px;color:#888;margin-top:1px">원룸 3칸 격벽 제거 사용</div>
-        </div>
-        <div style="margin-left:auto;font-size:11px;font-weight:700;color:var(--navy)">139,000원~</div>
-      </div>
-
-      <div style="background:#f8f9fc;border-radius:8px;border:1px solid #e8ecf6;padding:9px 11px;display:flex;align-items:center;gap:10px">
-        <div style="width:36px;height:36px;background:#fee2e2;border:1.5px solid #fca5a5;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:900;color:#991b1b;text-align:center;line-height:1.2">포<br>룸</div>
-        <div>
-          <div style="font-size:12px;font-weight:800;color:#111">포룸 <span style="font-size:10px;color:#aaa;font-weight:400">Quad Unit</span></div>
-          <div style="font-size:10.5px;color:#555;margin-top:2px">180×180 / 360×90 × 210cm</div>
-          <div style="font-size:10px;color:#888;margin-top:1px">원룸 4칸 격벽 제거 사용</div>
-        </div>
-        <div style="margin-left:auto;font-size:11px;font-weight:700;color:var(--navy)">189,000원~</div>
-      </div>
-
-    </div>
-  </div>
-  <div class="pc">
     <div class="pct">이용 안내</div>
     <div class="ni"><span class="nic">📹</span>CCTV 24시간 녹화 운영</div>
     <div class="ni"><span class="nic">🔑</span>스마트폰 원격 출입 (24시간)</div>
     <div class="ni"><span class="nic">🌡️</span>항온항습 자동 유지</div>
     <div class="ni"><span class="nic">🚗</span>방문 차량 30분 무료 주차</div>
     <div class="ni"><span class="nic">🚭</span>실내 금연 · 애완동물 입장 불가</div>
+    <div class="ni"><span class="nic">📞</span>고객센터 010-6464-1666</div>
     <div style="margin-top:12px;padding-top:12px;border-top:1px solid #eef">
       <div style="font-size:11px;color:#999;font-weight:700;margin-bottom:8px">문의 / 예약</div>
       <div style="display:flex;gap:8px">
@@ -251,7 +196,7 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
         <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:#16a34a;color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">💬 문자문의</a>
       </div>
     </div>
-    <div class="ni" style="margin-top:8px"><span class="nic">📞</span>고객센터 010-6464-1666</div>
+    <div class="ni"><span class="nic">📞</span>고객센터 010-6464-1666</div>
     <div class="warn">⚠️ <strong>연체 안내</strong><br>· 15일 이상: 수령 시 20% 추가<br>· 30일 이상: 통지 후 7일 유예, 물품처분 가능</div>
   </div>
 </div>
@@ -285,8 +230,8 @@ const COLS={
   H:[{id:'H12'},{id:'H11'},{id:'H10'},{id:'H09'},{pillar:1},{id:'H08'},{id:'H07'},{id:'H06'},{id:'H05'},{pillar:1},{id:'H04'},{id:'H03'},{id:'H02'},{id:'H01'}],
   G:[{id:'G13'},{id:'G12'},{id:'G11'},{id:'G10'},{id:'G09'},{id:'G08'},{id:'G07'},{id:'G06'},{id:'G05'},{id:'G04'},{id:'G03'},{id:'G02'},{id:'G01'}],
   F:[{id:'F13'},{id:'F12'},{id:'F11'},{id:'F10'},{id:'F09'},{id:'F08'},{id:'F07'},{id:'F06'},{id:'F05'},{id:'F04'},{id:'F03'},{id:'F02'},{id:'F01'}],
-  E:[{id:'E14'},{id:'E13'},{id:'E12'},{id:'E11'},{pillar:1},{id:'E09'},{id:'E08'},{id:'E07'},{id:'E06'},{id:'E05'},{pillar:1},{id:'E03'},{id:'E02'},{id:'E01'}],
-  D:[{id:'D11'},{id:'D10'},{id:'D09'},{id:'D08'},{gap:1},{id:'D07'},{id:'D06'},{id:'D05'},{id:'D04'},{id:'D03'},{gap:1},{gap:1},{id:'D02'},{id:'D01'}],
+  E:[{id:'E14'},{id:'E13'},{id:'E12'},{id:'E11'},{id:'E10'},{id:'E09'},{id:'E08'},{id:'E07'},{id:'E06'},{id:'E05'},{id:'E04'},{id:'E03'},{id:'E02'},{id:'E01'}],
+  D:[{id:'D11'},{id:'D10'},{id:'D09'},{id:'D08'},{pillar2:1},{id:'D07'},{id:'D06'},{id:'D05'},{id:'D04'},{pillar:1},{id:'D03'},{id:'D02'},{id:'D01'}],
   C:[{id:'C14'},{id:'C13'},{id:'C12'},{id:'C11'},{id:'C10'},{id:'C09'},{id:'C08'},{id:'C07'},{id:'C06'},{id:'C05'},{id:'C04'},{id:'C03'},{id:'C02'},{id:'C01'}],
   B:[{id:'B14'},{id:'B13'},{id:'B12'},{id:'B11'},{id:'B10'},{id:'B09'},{id:'B08'},{id:'B07'},{id:'B06'},{id:'B05'},{id:'B04'},{id:'B03'},{id:'B02'},{id:'B01'}],
 };
@@ -298,12 +243,12 @@ let mode='single', sels=[], selM=1;
 function isHalf(id){return id&&id.startsWith('A')}
 function selIdx(id){return sels.indexOf(id)}
 
-// H열 잔여일 숫자 → 상태 변환 (고객용: 이용가능/사용중만 표시)
+// H열 잔여일 숫자 → 상태 변환 (고객용: 이용가능/사용중만)
 function daysToStatus(days){
   if(days===null||days===undefined||days==='') return 'avail';
   const d = Number(days);
   if(isNaN(d)) return 'avail';
-  return 'active'; // 연체/만료임박 모두 '사용중'으로 표시
+  return 'active';
 }
 
 // ── 구글 시트 데이터 로드 ────────────────────────────
@@ -345,9 +290,7 @@ function getUnitCls(id){
 }
 function isOcc(id){ const st=UNIT_STATUS[id]||'avail'; return st!=='avail'; }
 
-function dimCheck(id){
-  return false; // 고객 확인용 페이지 - 흐리게 표시 안 함
-}
+function dimCheck(id){ return false; }
 
 function cell(id,w,h){
   if(!id) return`<div style="width:${w}px;height:${h}px"></div>`;
@@ -356,8 +299,7 @@ function cell(id,w,h){
   const cls=getUnitCls(id)+(dim?' mdim':'');
   const clickable=!occ&&!dim;
   const style=`width:${w}px;height:${h}px`;
-  const typeLabel=isHalf(id)?'하프룸':'원룸';
-  return`<div class="${cls}" ${clickable?`onclick="pick('${id}')"`:''}  style="${style}"><div class="uid">${id}</div><div class="utype">${typeLabel}</div></div>`;
+  return`<div class="${cls}" ${clickable?`onclick="pick('${id}')"`:''}  style="${style}"><div class="uid">${id}</div>${h>=40?`<div class="utype">${isHalf(id)?'하프':'원룸'}</div>`:''}</div>`;
 }
 function pillarCell(w,h){return`<div class="u pillar" style="width:${w}px;height:${h}px"><span style="font-size:9px;color:#aaa">✕</span></div>`}
 
@@ -365,6 +307,7 @@ function renderCol(key){
   let h=`<div class="col"><div class="cl">${key}</div>`;
   COLS[key].forEach(c=>{
     if(c.pillar) h+=pillarCell(S,S);
+    else if(c.pillar2) h+=pillarCell(S, S*2+G); // 두 칸짜리 기둥
     else if(c.gap) h+=`<div style="width:${S}px;height:${S}px"></div>`;
     else h+=cell(c.id,S,S);
   });
@@ -388,8 +331,8 @@ function renderMap(){
     if(!p){h+=pillarCell(S*2+4,S);return;}
     const[l,r]=p;
     h+=`<div style="display:flex;flex-direction:column;gap:3px">`;
-    if(l){const cls=getUnitCls(l)+(dimCheck(l)?' mdim':'');const occ=isOcc(l);h+=`<div class="${cls}" ${!occ&&!dimCheck(l)?`onclick="pick('${l}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${l}</div><div class="utype" style="font-size:7px">하프룸</div></div>`;}
-    if(r){const cls=getUnitCls(r)+(dimCheck(r)?' mdim':'');const occ=isOcc(r);h+=`<div class="${cls}" ${!occ&&!dimCheck(r)?`onclick="pick('${r}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${r}</div><div class="utype" style="font-size:7px">하프룸</div></div>`;}
+    if(l){const cls=getUnitCls(l)+(dimCheck(l)?' mdim':'');const occ=isOcc(l);h+=`<div class="${cls}" ${!occ&&!dimCheck(l)?`onclick="pick('${l}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${l}</div></div>`;}
+    if(r){const cls=getUnitCls(r)+(dimCheck(r)?' mdim':'');const occ=isOcc(r);h+=`<div class="${cls}" ${!occ&&!dimCheck(r)?`onclick="pick('${r}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${r}</div></div>`;}
     h+=`</div>`;
   });
   h+=`</div></div>`;
@@ -457,7 +400,7 @@ function updatePanel(){
   document.getElementById('pempty').style.display='none';
   const id=sels[0];
   const st=UNIT_STATUS[id]||'avail';
-  const stTxt=st==='avail'?'🟢 이용가능':'🔵 사용중';
+  const stTxt=st==='avail'?'🟢 이용가능':st==='active'?'🔵 사용중':st==='expiring'?'🟡 만료임박':'🔴 연체';
   const pd=document.getElementById('pdet');pd.style.display='block';
   pd.innerHTML=`
     <div style="text-align:center;padding:12px 0 8px">

@@ -470,8 +470,8 @@ const COLS={
   H:[{id:'H12'},{id:'H11'},{id:'H10'},{id:'H09'},{p:1},{id:'H08'},{id:'H07'},{id:'H06'},{id:'H05'},{p:1},{id:'H04'},{id:'H03'},{id:'H02'},{id:'H01'}],
   G:[{id:'G13'},{id:'G12'},{id:'G11'},{id:'G10'},{id:'G09'},{id:'G08'},{id:'G07'},{id:'G06'},{id:'G05'},{id:'G04'},{id:'G03'},{id:'G02'},{id:'G01'}],
   F:[{id:'F13'},{id:'F12'},{id:'F11'},{id:'F10'},{id:'F09'},{id:'F08'},{id:'F07'},{id:'F06'},{id:'F05'},{id:'F04'},{id:'F03'},{id:'F02'},{id:'F01'}],
-  E:[{id:'E14'},{id:'E13'},{id:'E12'},{id:'E11'},{p:1},{id:'E09'},{id:'E08'},{id:'E07'},{id:'E06'},{id:'E05'},{p:1},{id:'E03'},{id:'E02'},{id:'E01'}],
-  D:[{id:'D11'},{id:'D10'},{id:'D09'},{id:'D08'},{gap:1},{id:'D07'},{id:'D06'},{id:'D05'},{id:'D04'},{id:'D03'},{gap:1},{gap:1},{id:'D02'},{id:'D01'}],
+  E:[{id:'E14'},{id:'E13'},{id:'E12'},{id:'E11'},{id:'E10'},{id:'E09'},{id:'E08'},{id:'E07'},{id:'E06'},{id:'E05'},{id:'E04'},{id:'E03'},{id:'E02'},{id:'E01'}],
+  D:[{id:'D11'},{id:'D10'},{id:'D09'},{id:'D08'},{p2:1},{id:'D07'},{id:'D06'},{id:'D05'},{id:'D04'},{p:1},{id:'D03'},{id:'D02'},{id:'D01'}],
   C:[{id:'C14'},{id:'C13'},{id:'C12'},{id:'C11'},{id:'C10'},{id:'C09'},{id:'C08'},{id:'C07'},{id:'C06'},{id:'C05'},{id:'C04'},{id:'C03'},{id:'C02'},{id:'C01'}],
   B:[{id:'B14'},{id:'B13'},{id:'B12'},{id:'B11'},{id:'B10'},{id:'B09'},{id:'B08'},{id:'B07'},{id:'B06'},{id:'B05'},{id:'B04'},{id:'B03'},{id:'B02'},{id:'B01'}],
 };
@@ -495,6 +495,7 @@ function renderAdminMap(containerId, mk) {
     let s = `<div class="mcol"><div class="mcl">${key}</div>`;
     COLS[key].forEach(c => {
       if(c.p) s += pillarMu(S,S);
+      else if(c.p2) s += pillarMu(S, S*2+G); // 두 칸짜리 기둥
       else if(c.gap) s += `<div style="width:${S}px;height:${S}px"></div>`;
       else s += muCell(c.id, S, S, mk);
     });
