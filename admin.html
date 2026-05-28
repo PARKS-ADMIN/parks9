@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>파크스 관리자</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>
+const ADMIN_PW='0100';
+(function(){
+  if(sessionStorage.getItem('parks_auth')===ADMIN_PW)return;
+  document.addEventListener('DOMContentLoaded',function(){
+    document.body.style.display='none';
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:#0f1420;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:"Noto Sans KR",sans-serif';
+    ov.innerHTML=`<div style="background:#1e2230;border-radius:16px;padding:36px 32px;width:320px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5)">
+      <div style="font-size:32px;margin-bottom:12px">🔐</div>
+      <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:4px">관리자 로그인</div>
+      <div style="font-size:12px;color:#6b7280;margin-bottom:24px">무인셀프창고 파크스</div>
+      <input id="pwi" type="password" placeholder="비밀번호 입력"
+        style="width:100%;padding:12px 14px;border-radius:9px;border:1.5px solid #2e3548;background:#131720;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box"
+        onkeydown="if(event.key==='Enter')chkPW()">
+      <button onclick="chkPW()" style="width:100%;padding:12px;background:#4f46e5;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">로그인</button>
+      <div id="pwe" style="color:#ef4444;font-size:12px;margin-top:10px;display:none">비밀번호가 올바르지 않습니다.</div>
+    </div>`;
+    document.body.parentNode.insertBefore(ov,document.body);
+    document.body.style.display='';
+    setTimeout(()=>document.getElementById('pwi').focus(),100);
+  });
+})();
+function chkPW(){
+  const v=document.getElementById('pwi').value;
+  if(v===ADMIN_PW){sessionStorage.setItem('parks_auth',ADMIN_PW);document.querySelector('div[style*="position:fixed"]').remove();}
+  else{document.getElementById('pwe').style.display='block';document.getElementById('pwi').value='';document.getElementById('pwi').focus();}
+}
+</script>
+<style>
+:root{
+  --navy:#1a2870;--navy2:#111d5e;--bg:#f0f3fb;--sur:#fff;--sur2:#f8f9fc;--bdr:#e0e4f2;--muted:#9ca3af;
+  --green:#16a34a;--gbg:#dcfce7;--yellow:#d97706;--ybg:#fef3c7;--red:#dc2626;--rbg:#fee2e2;--blue:#0284c7;--bbg:#dbeafe;
+  /* 창고 상태 색상 */
+  --avail-bg:#dcfce7;--avail-bd:#86efac;--avail-c:#15803d;
+  --active-bg:#dbeafe;--active-bd:#93c5fd;--active-c:#1e40af;
+  --exp-bg:#fef3c7;--exp-bd:#fde68a;--exp-c:#92400e;
+  --over-bg:#fee2e2;--over-bd:#fca5a5;--over-c:#991b1b;
+  --pillar:#cbd5e1;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min-height:100dvh}
+
+/* SIDEBAR */
+.sb{width:200px;background:#16113a;color:rgba(255,255,255,.65);display:flex;flex-direction:column;flex-shrink:0;min-height:100dvh;position:fixed;top:0;left:0;z-index:200;transition:transform .28s cubic-bezier(.32,.72,0,1)}
+@media(max-width:860px){.sb{transform:translateX(-100%)}.sb.open{transform:translateX(0);box-shadow:4px 0 40px rgba(0,0,0,.35)}}
+.sb-top{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sb-logo{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;color:#a5b4fc;letter-spacing:.05em}
+.sb-role{font-size:9px;color:rgba(255,255,255,.3);margin-top:2px}
+.sb-nav{flex:1;padding:8px 0;overflow-y:auto}
+.sb-sec{padding:10px 14px 4px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:rgba(255,255,255,.25)}
+.sb-item{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:12.5px;color:rgba(255,255,255,.65);cursor:pointer;border-left:2px solid transparent;transition:all .13s}
+.sb-item:hover{background:rgba(99,102,241,.1);color:#fff}
+.sb-item.on{background:rgba(99,102,241,.18);color:#fff;border-left-color:#818cf8}
+.sb-ic{font-size:14px;width:16px;text-align:center;flex-shrink:0}
+.sb-bdg{margin-left:auto;background:var(--red);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px}
+.sb-ft{padding:12px 16px;border-top:1px solid rgba(255,255,255,.06);font-size:10px;color:rgba(255,255,255,.25)}
+.sb-ov{display:none;position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.5);backdrop-filter:blur(3px)}
+.sb-ov.on{display:block}
+
+/* MAIN */
+.main{flex:1;margin-left:200px;display:flex;flex-direction:column;min-height:100dvh}
+@media(max-width:860px){.main{margin-left:0}}
+
+/* TOPBAR */
+.tb{background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--bdr);height:52px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.tb-l{display:flex;align-items:center;gap:10px}
+.menu-btn{display:none;width:32px;height:32px;border-radius:7px;border:1px solid var(--bdr);background:var(--sur);align-items:center;justify-content:center;cursor:pointer;font-size:16px;flex-shrink:0}
+@media(max-width:860px){.menu-btn{display:flex}}
+.tb-ttl{font-size:15px;font-weight:800;color:var(--navy)}
+.tb-r{display:flex;align-items:center;gap:7px}
+.date-badge{font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);background:var(--sur2);padding:4px 10px;border-radius:6px;white-space:nowrap}
+
+/* CONTENT */
+.content{flex:1;padding:18px 18px 40px;overflow-y:auto}
+
+/* PAGE TABS */
+.page-tabs{display:flex;gap:6px;margin-bottom:18px;overflow-x:auto;scrollbar-width:none;flex-wrap:wrap}
+.page-tabs::-webkit-scrollbar{display:none}
+.ptab{padding:7px 14px;border-radius:8px;font-size:12.5px;font-weight:600;border:1.5px solid var(--bdr);background:var(--sur);color:var(--muted);cursor:pointer;white-space:nowrap;transition:all .14s;font-family:'Noto Sans KR',sans-serif}
+.ptab.on{background:var(--navy);border-color:var(--navy);color:#fff}
+
+/* KPI */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:1100px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--sur);border-radius:11px;padding:14px 15px;border:1px solid var(--bdr);border-top:3px solid;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.kpi.k1{border-top-color:var(--navy)}.kpi.k2{border-top-color:var(--green)}.kpi.k3{border-top-color:var(--yellow)}.kpi.k4{border-top-color:var(--red)}.kpi.k5{border-top-color:var(--blue)}
+.kl{font-size:10px;color:var(--muted);margin-bottom:5px;font-weight:500}
+.kv{font-family:'Space Mono',monospace;font-size:22px;font-weight:700}
+.ks{font-size:10px;color:var(--muted);margin-top:3px}
+
+/* TWO COL */
+.two{display:grid;grid-template-columns:1fr 340px;gap:14px;margin-bottom:14px}
+@media(max-width:1100px){.two{grid-template-columns:1fr}}
+
+/* CARD */
+.card{background:var(--sur);border-radius:12px;border:1px solid var(--bdr);box-shadow:0 1px 4px rgba(0,0,0,.05);overflow:hidden}
+.ch{padding:13px 16px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.ch h2{font-size:13.5px;font-weight:700;color:var(--navy)}
+.cb{padding:14px 16px}
+
+/* MAP */
+.map-scroll{overflow-x:auto}
+.map-inner{display:inline-flex;gap:7px;align-items:flex-start;min-width:520px}
+.mcol{display:flex;flex-direction:column;gap:4px}
+.mcl{font-family:'Space Mono',monospace;font-size:10px;color:#aaa;text-align:center;margin-bottom:3px}
+.mu{border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;position:relative;font-family:'Space Mono',monospace;border:1.5px solid transparent;user-select:none}
+.mu.avail  {background:var(--avail-bg);border-color:var(--avail-bd);color:var(--avail-c)}
+.mu.active {background:var(--active-bg);border-color:var(--active-bd);color:var(--active-c)}
+.mu.expiring{background:var(--exp-bg);border-color:var(--exp-bd);color:var(--exp-c)}
+.mu.overdue{background:var(--over-bg);border-color:var(--over-bd);color:var(--over-c)}
+.mu.pillar {background:var(--pillar);border-color:#a8b3c8;cursor:default}
+.mu.msel   {outline:2.5px solid var(--navy);outline-offset:1px;transform:translateY(-1px);box-shadow:0 3px 10px rgba(26,40,112,.3)}
+.mu:not(.pillar):hover{filter:brightness(1.06);transform:translateY(-1px)}
+.mu .mid{font-size:9px;font-weight:700;line-height:1.1;text-align:center}
+.pulse-dot{position:absolute;top:2px;right:2px;width:6px;height:6px;border-radius:50%;background:var(--red);animation:pulse 1.5s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.fleg{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.fl{display:flex;align-items:center;gap:4px;font-size:11px;color:#555}
+.flc{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
+/* DETAIL PANEL */
+.dp-empty{text-align:center;padding:32px 12px;color:#c0c5d4}
+.cust-head{display:flex;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid var(--bdr)}
+.av{width:38px;height:38px;border-radius:9px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.cn{font-size:14px;font-weight:800}
+.cs{font-size:11px;color:var(--muted);margin-top:1px}
+.dbody{padding:13px 16px}
+.drow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f0f3f9;font-size:12.5px}
+.drow:last-child{border-bottom:none}
+.dk{color:var(--muted)}.dv{font-weight:600}
+.bdg{display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700}
+.bdg.g{background:var(--gbg);color:var(--green)}.bdg.r{background:var(--rbg);color:var(--red)}
+.bdg.y{background:var(--ybg);color:var(--yellow)}.bdg.b{background:var(--bbg);color:var(--blue)}
+.act-row{display:flex;gap:7px;padding:11px 16px;border-top:1px solid var(--bdr);flex-wrap:wrap}
+.abtn{flex:1;min-width:64px;padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid var(--bdr);background:var(--sur2);color:var(--navy);font-family:'Noto Sans KR',sans-serif;transition:all .13s}
+.abtn.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
+.abtn.danger{background:var(--rbg);color:var(--red);border-color:#fca5a5}
+
+/* LIST */
+.el-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bdr)}
+.el-item:last-child{border-bottom:none}
+.el-av{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.el-info{flex:1;min-width:0}
+.el-name{font-size:12.5px;font-weight:700}
+.el-unit{font-size:10.5px;color:var(--muted);margin-top:1px}
+.el-right{text-align:right;flex-shrink:0}
+.el-days{font-family:'Space Mono',monospace;font-size:12.5px;font-weight:700}
+.el-send{font-size:10.5px;color:var(--navy);cursor:pointer;background:none;border:none;font-family:'Noto Sans KR',sans-serif;text-decoration:underline;margin-top:2px;display:block}
+
+/* TABLE */
+.ctbl{width:100%;border-collapse:collapse}
+.ctbl th{font-size:11px;color:var(--muted);font-weight:600;text-align:left;padding:8px 12px;border-bottom:1px solid var(--bdr);background:var(--sur2);white-space:nowrap}
+.ctbl td{font-size:12.5px;padding:9px 12px;border-bottom:1px solid var(--bdr);vertical-align:middle}
+.ctbl tr:last-child td{border-bottom:none}
+.ctbl tr:hover td{background:var(--sur2);cursor:pointer}
+.mono{font-family:'Space Mono',monospace}
+.tag{display:inline-block;padding:2px 7px;border-radius:6px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.tag.active{background:var(--bbg);color:var(--blue)}
+.tag.expiring{background:var(--ybg);color:var(--yellow)}
+.tag.overdue{background:var(--rbg);color:var(--red)}
+.tag.avail{background:var(--gbg);color:var(--green)}
+
+/* PAGE SECTIONS */
+.page-section{display:none}.page-section.on{display:block}
+
+/* EDIT MODAL */
+#edit-modal{display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center}
+#edit-modal.on{display:flex}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="sb-ov" id="sb-ov" onclick="closeSB()"></div>
+<aside class="sb" id="sb">
+  <div class="sb-top"><div class="sb-logo">PARKS ADMIN</div><div class="sb-role">관리자 대시보드</div></div>
+  <nav class="sb-nav">
+    <div class="sb-sec">메인</div>
+    <div class="sb-item on" onclick="showPage('dashboard',this)"><span class="sb-ic">📊</span>대시보드</div>
+    <div class="sb-item" onclick="showPage('floormap',this)"><span class="sb-ic">🗺️</span>창고 배치도</div>
+    <div class="sb-sec">운영</div>
+    <div class="sb-item" onclick="showPage('customers',this)"><span class="sb-ic">👤</span>고객 관리</div>
+    <div class="sb-item" onclick="showPage('expiry',this)"><span class="sb-ic">📅</span>만료 임박<span class="sb-bdg" id="sb-exp-cnt">0</span></div>
+    <div class="sb-item" onclick="showPage('overdue',this)"><span class="sb-ic">⚠️</span>연체 관리<span class="sb-bdg" id="sb-ov-cnt">0</span></div>
+    <div class="sb-item" onclick="showPage('ended',this)"><span class="sb-ic">📁</span>종료 고객</div>
+  </nav>
+  <div class="sb-ft">파크스 관리자 시스템</div>
+</aside>
+
+<div class="main">
+  <div class="tb">
+    <div class="tb-l">
+      <button class="menu-btn" onclick="toggleSB()">☰</button>
+      <div class="tb-ttl" id="tb-ttl">운영 현황 대시보드</div>
+    </div>
+    <div class="tb-r">
+      <div class="date-badge" id="today-badge">로딩중...</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-tabs">
+      <button class="ptab on" onclick="showPage('dashboard',this)">📊 대시보드</button>
+      <button class="ptab" onclick="showPage('floormap',this)">🗺️ 배치도</button>
+      <button class="ptab" onclick="showPage('customers',this)">👤 고객목록</button>
+      <button class="ptab" onclick="showPage('expiry',this)">📅 만료임박</button>
+      <button class="ptab" onclick="showPage('overdue',this)">⚠️ 연체</button>
+      <button class="ptab" onclick="showPage('ended',this)">📁 종료고객</button>
+    </div>
+
+    <!-- 대시보드 -->
+    <div class="page-section on" id="page-dashboard">
+      <div class="kpi-row">
+        <div class="kpi k1"><div class="kl">점유율</div><div class="kv" style="color:var(--navy)" id="kv-rate">—</div><div class="ks" id="ks-rate">—</div></div>
+        <div class="kpi k2"><div class="kl">이용가능</div><div class="kv" style="color:var(--green)" id="kv-avail">—</div><div class="ks">즉시 이용 가능</div></div>
+        <div class="kpi k3"><div class="kl">만료임박 (14일)</div><div class="kv" style="color:var(--yellow)" id="kv-exp">—</div><div class="ks">D-0~14 해당</div></div>
+        <div class="kpi k4"><div class="kl">연체</div><div class="kv" style="color:var(--red)" id="kv-od">—</div><div class="ks">즉시 조치 필요</div></div>
+        <div class="kpi k5"><div class="kl">사용중 (정상)</div><div class="kv" style="color:var(--blue)" id="kv-act">—</div><div class="ks">정상 이용중</div></div>
+      </div>
+      <div class="two">
+        <div class="card">
+          <div class="ch"><h2>창고 배치도</h2>
+            <div style="display:flex;gap:8px;font-size:11px;flex-wrap:wrap">
+              <span style="color:var(--avail-c)">● 공실</span>
+              <span style="color:var(--active-c)">● 이용중</span>
+              <span style="color:var(--exp-c)">● 임박</span>
+              <span style="color:var(--over-c)">● 연체</span>
+            </div>
+          </div>
+          <div class="cb">
+            <div class="map-scroll"><div id="admin-map"></div></div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column">
+          <div class="ch"><h2 id="dp-title">창고 상세</h2></div>
+          <div id="dp-body"><div class="dp-empty"><div style="font-size:30px;margin-bottom:8px">🗂️</div><p style="font-size:12.5px;color:#b0b8cc;line-height:1.7">창고를 클릭하면<br>계약 정보가 표시됩니다</p></div></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="card">
+          <div class="ch"><h2>만료 임박 (14일 이내)</h2><button style="font-size:11px;background:var(--navy);color:#fff;border:none;border-radius:6px;padding:4px 11px;cursor:pointer" onclick="alert('일괄 알림 발송 완료!')">일괄 알림</button></div>
+          <div class="cb" id="exp-list" style="max-height:280px;overflow-y:auto"></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h2>연체 계약</h2><span style="font-size:11.5px;color:var(--red);font-weight:700" id="od-total-label"></span></div>
+          <div class="cb" id="od-list" style="max-height:280px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 배치도 -->
+    <div class="page-section" id="page-floormap">
+      <div class="two">
+        <div class="card"><div class="ch"><h2>창고 배치도 (전체)</h2></div>
+          <div class="cb"><div class="fleg">
+            <span class="fl"><span class="flc" style="background:var(--avail-bg);border:1px solid var(--avail-bd)"></span>이용가능</span>
+            <span class="fl"><span class="flc" style="background:var(--active-bg);border:1px solid var(--active-bd)"></span>이용중</span>
+            <span class="fl"><span class="flc" style="background:var(--exp-bg);border:1px solid var(--exp-bd)"></span>만료임박</span>
+            <span class="fl"><span class="flc" style="background:var(--over-bg);border:1px solid var(--over-bd)"></span>연체</span>
+          </div>
+          <div class="map-scroll"><div id="admin-map2"></div></div></div>
+        </div>
+        <div class="card" style="display:flex;flex-direction:column">
+          <div class="ch"><h2 id="dp2-title">창고 상세</h2></div>
+          <div id="dp2-body"><div class="dp-empty"><p style="font-size:12.5px;color:#b0b8cc;line-height:1.7">창고를 클릭하세요</p></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 고객목록 -->
+    <div class="page-section" id="page-customers">
+      <div id="edit-modal">
+        <div style="background:var(--sur);border-radius:14px;padding:24px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+            <h2 style="font-size:16px;font-weight:800;color:var(--navy)">고객 정보 수정</h2>
+            <button onclick="closeEditModal()" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--bdr);background:var(--sur2);cursor:pointer;font-size:14px">✕</button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="edit-fields"></div>
+          <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
+            <button onclick="closeEditModal()" style="padding:9px 18px;border-radius:8px;border:1px solid var(--bdr);background:var(--sur2);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">취소</button>
+            <button onclick="saveEdit()" style="padding:9px 18px;border-radius:8px;border:none;background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">저장</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch">
+          <h2>고객 목록 <span style="font-size:12px;color:var(--muted)" id="cust-count"></span></h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input type="text" id="cust-search" placeholder="이름/연락처/창고 검색"
+              style="padding:6px 10px;border-radius:8px;border:1px solid var(--bdr);font-size:12px;width:180px;font-family:'Noto Sans KR',sans-serif"
+              oninput="filterCusts(this.value)">
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="ctbl">
+            <thead><tr><th>창고</th><th>고객명</th><th>연락처</th><th>타입</th><th>계약종료</th><th>잔여일</th><th>상태</th><th>결제</th></tr></thead>
+            <tbody id="cust-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 만료임박 -->
+    <div class="page-section" id="page-expiry">
+      <div class="card">
+        <div class="ch"><h2>만료 임박 계약 (14일 이내)</h2><button style="font-size:11px;background:var(--navy);color:#fff;border:none;border-radius:6px;padding:5px 12px;cursor:pointer" onclick="alert('일괄 알림 발송 완료!')">일괄 알림 발송</button></div>
+        <div style="overflow-x:auto">
+          <table class="ctbl">
+            <thead><tr><th>창고</th><th>고객</th><th>연락처</th><th>타입</th><th>만료일</th><th>잔여일</th><th>액션</th></tr></thead>
+            <tbody id="exp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 연체 -->
+    <div class="page-section" id="page-overdue">
+      <div class="card">
+        <div class="ch"><h2>연체 계약</h2><span style="font-size:12px;color:var(--red);font-weight:700" id="od-summary"></span></div>
+        <div style="overflow-x:auto">
+          <table class="ctbl">
+            <thead><tr><th>창고</th><th>고객</th><th>연락처</th><th>타입</th><th>만료일</th><th>연체일수</th><th>추가요금</th><th>액션</th></tr></thead>
+            <tbody id="od-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 종료고객 -->
+    <div class="page-section" id="page-ended">
+      <div class="card">
+        <div class="ch">
+          <h2>종료 고객 이력 <span style="font-size:12px;color:var(--muted);font-weight:400" id="ended-count"></span></h2>
+          <input type="text" id="ended-search" placeholder="이름/연락처/창고 검색"
+            style="padding:6px 10px;border-radius:8px;border:1px solid var(--bdr);font-size:12px;width:180px;font-family:'Noto Sans KR',sans-serif"
+            oninput="filterEnded(this.value)">
+        </div>
+        <div id="ended-loading" style="text-align:center;padding:32px;color:var(--muted)">
+          <div style="font-size:24px;margin-bottom:8px">⏳</div>
+          <p style="font-size:13px">구글 시트에서 불러오는 중...</p>
+        </div>
+        <div style="overflow-x:auto;display:none" id="ended-table-wrap">
+          <table class="ctbl">
+            <thead><tr><th>창고</th><th>타입</th><th>고객명</th><th>연락처</th><th>계약시작</th><th>계약종료</th><th>이용기간</th><th>금액</th><th>결제수단</th><th>메모</th></tr></thead>
+            <tbody id="ended-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// 구글 시트 설정
+// ══════════════════════════════════════════════════════
+const SHEET_ID = '1Cs_Ol94VqEauRx3GTim1q2Sz25eIvnM0q7xBeKzBFMA';
+
+async function fetchSheet(name) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}&t=${Date.now()}`;
+  const res = await fetch(url);
+  const text = await res.text();
+  return JSON.parse(text.substring(47, text.length - 2)).table.rows;
+}
+function rv(row, i) {
+  return row.c && row.c[i] && row.c[i].v != null ? String(row.c[i].v).trim() : '';
+}
+
+// ══════════════════════════════════════════════════════
+// 데이터 저장소
+// ══════════════════════════════════════════════════════
+let UNITS = [];   // 전체 창고 목록 [{id, type, status, days, name, phone, start, end, amount, goods, pay}]
+let CUSTS = [];   // 사용중 고객 목록 (UNITS에서 추출)
+let UNIT_MAP = {}; // {창고번호: unit 객체}
+let ENDED_ALL = [];
+
+// ══════════════════════════════════════════════════════
+// 데이터 로드
+// ══════════════════════════════════════════════════════
+async function loadAllData() {
+  try {
+    const rows = await fetchSheet('창고목록');
+    const newUnits = [];
+    rows.forEach(row => {
+      if (!row.c || !row.c[0] || !row.c[0].v) return;
+      const id    = rv(row, 0);
+      const type  = rv(row, 1);
+      const daysRaw = row.c[7] && row.c[7].v != null ? Number(row.c[7].v) : null;
+      const status = daysToStatus(daysRaw);
+      newUnits.push({
+        id, type, status,
+        days:   daysRaw,
+        name:   rv(row, 3),
+        phone:  rv(row, 4),
+        start:  rv(row, 5),
+        end:    rv(row, 6),
+        amount: parseInt(String(rv(row, 8)).replace(/,/g,'')) || 0,
+        goods:  rv(row, 9),
+        pay:    rv(row, 10),
+        memo:   rv(row, 11),
+      });
+    });
+
+    UNITS = newUnits;
+
+    // UNIT_MAP 재구성
+    UNIT_MAP = {};
+    UNITS.forEach(u => { UNIT_MAP[u.id] = u; });
+
+    // CUSTS: 사용중 고객, 중복(같은 phone+end) 합산
+    const seen = new Set();
+    const newCUSTS = [];
+    UNITS.forEach(u => {
+      if (u.status === 'avail' || !u.phone) return;
+      const key = u.phone + (u.end || '');
+      if (seen.has(key)) {
+        const ex = newCUSTS.find(c => c.phone === u.phone && c.end === u.end);
+        if (ex && !ex.units.includes(u.id)) ex.units += ',' + u.id;
+        return;
+      }
+      seen.add(key);
+      newCUSTS.push({ ...u, units: u.id });
+    });
+    CUSTS = newCUSTS;
+
+    refreshAll();
+    updateTodayBadge();
+    console.log('✅ 로드 완료 — 창고:', UNITS.length, '/ 계약:', CUSTS.length);
+  } catch(e) {
+    console.error('로드 실패:', e);
+    refreshAll();
+  }
+}
+
+function daysToStatus(days) {
+  if (days === null || days === undefined || days === '') return 'avail';
+  const d = Number(days);
+  if (isNaN(d)) return 'avail';
+  if (d < 0) return 'overdue';
+  if (d <= 14) return 'expiring';
+  return 'active';
+}
+
+loadAllData();
+setInterval(loadAllData, 60000);
+
+function updateTodayBadge() {
+  const now = new Date();
+  document.getElementById('today-badge').textContent =
+    `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+}
+
+// ══════════════════════════════════════════════════════
+// 배치도 렌더링
+// ══════════════════════════════════════════════════════
+const S=44, HH=19, G=4;
+const COLS={
+  H:[{id:'H12'},{id:'H11'},{id:'H10'},{id:'H09'},{p:1},{id:'H08'},{id:'H07'},{id:'H06'},{id:'H05'},{p:1},{id:'H04'},{id:'H03'},{id:'H02'},{id:'H01'}],
+  G:[{id:'G13'},{id:'G12'},{id:'G11'},{id:'G10'},{id:'G09'},{id:'G08'},{id:'G07'},{id:'G06'},{id:'G05'},{id:'G04'},{id:'G03'},{id:'G02'},{id:'G01'}],
+  F:[{id:'F13'},{id:'F12'},{id:'F11'},{id:'F10'},{id:'F09'},{id:'F08'},{id:'F07'},{id:'F06'},{id:'F05'},{id:'F04'},{id:'F03'},{id:'F02'},{id:'F01'}],
+  E:[{id:'E14'},{id:'E13'},{id:'E12'},{id:'E11'},{p:1},{id:'E09'},{id:'E08'},{id:'E07'},{id:'E06'},{id:'E05'},{p:1},{id:'E03'},{id:'E02'},{id:'E01'}],
+  D:[{id:'D11'},{id:'D10'},{id:'D09'},{id:'D08'},{gap:1},{id:'D07'},{id:'D06'},{id:'D05'},{id:'D04'},{id:'D03'},{gap:1},{gap:1},{id:'D02'},{id:'D01'}],
+  C:[{id:'C14'},{id:'C13'},{id:'C12'},{id:'C11'},{id:'C10'},{id:'C09'},{id:'C08'},{id:'C07'},{id:'C06'},{id:'C05'},{id:'C04'},{id:'C03'},{id:'C02'},{id:'C01'}],
+  B:[{id:'B14'},{id:'B13'},{id:'B12'},{id:'B11'},{id:'B10'},{id:'B09'},{id:'B08'},{id:'B07'},{id:'B06'},{id:'B05'},{id:'B04'},{id:'B03'},{id:'B02'},{id:'B01'}],
+};
+const APAIRS=[['A21','A22'],['A19','A20'],['A17','A18'],['A15','A16'],null,['A13','A14'],['A11','A12'],['A09','A10'],['A07','A08'],null,['A05','A06'],['A03','A04'],['A01','A02']];
+const IROW=['I04','I03','I02','I01'];
+
+function muCell(id, w, h, mk) {
+  const u = UNIT_MAP[id] || {status:'avail'};
+  const isOd = u.status === 'overdue';
+  return `<div class="mu ${u.status}" style="width:${w}px;height:${h}px" onclick="showUnit('${id}','${mk}')">
+    <div class="mid" style="font-size:${h<28?'7.5':'9'}px">${id}</div>
+    ${isOd ? '<div class="pulse-dot"></div>' : ''}
+  </div>`;
+}
+function pillarMu(w,h){return`<div class="mu pillar" style="width:${w}px;height:${h}px"><span style="font-size:9px;color:#aaa">✕</span></div>`}
+
+function renderAdminMap(containerId, mk) {
+  const el = document.getElementById(containerId); if(!el) return;
+  let h = `<div class="map-inner">`;
+  function col(key) {
+    let s = `<div class="mcol"><div class="mcl">${key}</div>`;
+    COLS[key].forEach(c => {
+      if(c.p) s += pillarMu(S,S);
+      else if(c.gap) s += `<div style="width:${S}px;height:${S}px"></div>`;
+      else s += muCell(c.id, S, S, mk);
+    });
+    return s + '</div>';
+  }
+  h += col('H') + `<div style="width:8px"></div>`;
+  h += `<div style="display:flex;gap:${G}px">${col('G')}${col('F')}</div>`;
+  h += `<div style="width:6px"></div>`;
+  h += `<div style="display:flex;gap:${G}px">${col('E')}${col('D')}</div>`;
+  h += `<div style="width:6px"></div>`;
+  h += `<div style="display:flex;gap:${G}px">${col('C')}${col('B')}</div>`;
+  h += `<div style="width:8px"></div>`;
+  // A열
+  h += `<div class="mcol"><div class="mcl">A</div>`;
+  APAIRS.forEach(p => {
+    if(!p){h+=pillarMu(S*2+4,S);return;}
+    const[l,r]=p;
+    h+=`<div style="display:flex;flex-direction:column;gap:3px">`;
+    if(l){const u=UNIT_MAP[l]||{status:'avail'};h+=`<div class="mu ${u.status}" style="width:${S}px;height:${HH}px" onclick="showUnit('${l}','${mk}')"><div class="mid" style="font-size:8px">${l}</div>${u.status==='overdue'?'<div class="pulse-dot"></div>':''}</div>`;}
+    if(r){const u=UNIT_MAP[r]||{status:'avail'};h+=`<div class="mu ${u.status}" style="width:${S}px;height:${HH}px" onclick="showUnit('${r}','${mk}')"><div class="mid" style="font-size:8px">${r}</div>${u.status==='overdue'?'<div class="pulse-dot"></div>':''}</div>`;}
+    h+=`</div>`;
+  });
+  h += '</div></div>';
+  // I열
+  h+=`<div style="margin-top:10px;padding-top:9px;border-top:1px dashed #d0d5e8;display:flex;align-items:center;gap:${G}px"><span style="font-family:monospace;font-size:9px;color:#aaa;margin-right:4px">I동</span>`;
+  IROW.forEach(id=>h+=muCell(id,S,S,mk));
+  h+=`</div>`;
+  h+=`<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:10px;color:#aaa;border-top:1px dashed #d0d5e8;padding-top:8px"><span>🔴 현위치 | 🚶 메인 출입구</span><span>🚗 주차장 출입구 →</span></div>`;
+  el.innerHTML = h;
+}
+
+// ══════════════════════════════════════════════════════
+// 창고 클릭 상세
+// ══════════════════════════════════════════════════════
+function showUnit(id, mk) {
+  const titleId = mk==='m1' ? 'dp-title' : 'dp2-title';
+  const bodyId  = mk==='m1' ? 'dp-body'  : 'dp2-body';
+  document.getElementById(titleId).textContent = `창고 ${id}`;
+  document.querySelectorAll('.mu.msel').forEach(el=>el.classList.remove('msel'));
+  document.querySelectorAll(`.mu[onclick*="'${id}'"]`).forEach(el=>el.classList.add('msel'));
+
+  const u = UNIT_MAP[id];
+  if(!u || u.status==='avail') {
+    document.getElementById(bodyId).innerHTML=`<div class="dp-empty"><div style="font-size:30px;margin-bottom:8px">🟢</div><p style="font-size:12.5px;color:#6b7280;line-height:1.7">공실 창고입니다<br>예약 등록 가능</p></div><div class="act-row"><button class="abtn primary" onclick="alert('예약 등록')">예약 등록</button></div>`;
+    return;
+  }
+  const d = u.days;
+  const stBdg = u.status==='overdue' ? `<span class="bdg r">연체 ${Math.abs(d)}일</span>`
+              : u.status==='expiring' ? `<span class="bdg y">D-${d}</span>`
+              : `<span class="bdg b">이용중</span>`;
+  const nm = u.name||'고객';
+  document.getElementById(bodyId).innerHTML=`
+    <div class="cust-head"><div class="av">${nm.charAt(0)||'👤'}</div>
+      <div><div class="cn">${nm}</div><div class="cs">${id} · ${u.type} · ${u.phone}</div></div>${stBdg}
+    </div>
+    <div class="dbody">
+      <div class="drow"><span class="dk">보관물품</span><span class="dv">${u.goods||'—'}</span></div>
+      <div class="drow"><span class="dk">계약 시작</span><span class="dv">${u.start||'—'}</span></div>
+      <div class="drow"><span class="dk">계약 종료</span><span class="dv">${u.end||'—'}</span></div>
+      <div class="drow"><span class="dk">잔여일</span><span class="dv" style="color:${u.status==='overdue'?'var(--red)':u.status==='expiring'?'var(--yellow)':'var(--blue)'}">${d!==null?(d<0?`연체 ${Math.abs(d)}일`:`D-${d}`):'—'}</span></div>
+      <div class="drow"><span class="dk">결제 금액</span><span class="dv">${u.amount?u.amount.toLocaleString()+'원':'—'}</span></div>
+      <div class="drow"><span class="dk">결제 수단</span><span class="dv">${u.pay||'—'}</span></div>
+    </div>
+    <div class="act-row">
+      <button class="abtn primary" onclick="alert('${nm}님에게 알림 발송 완료!')">알림 발송</button>
+      <button class="abtn" onclick="alert('계약 연장 처리')">계약 연장</button>
+      <button class="abtn danger" onclick="alert('계약 해지 처리')">해지</button>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// KPI
+// ══════════════════════════════════════════════════════
+function buildKPI() {
+  const avail   = UNITS.filter(u=>u.status==='avail').length;
+  const active  = UNITS.filter(u=>u.status==='active').length;
+  const exp     = UNITS.filter(u=>u.status==='expiring').length;
+  const od      = UNITS.filter(u=>u.status==='overdue').length;
+  const total   = UNITS.length;
+  const occ     = total - avail;
+  document.getElementById('kv-rate').textContent  = total ? Math.round(occ/total*100)+'%' : '—';
+  document.getElementById('ks-rate').textContent  = `전체 ${total}개 중 ${occ}개 사용중`;
+  document.getElementById('kv-avail').textContent = avail;
+  document.getElementById('kv-exp').textContent   = exp;
+  document.getElementById('kv-od').textContent    = od;
+  document.getElementById('kv-act').textContent   = active;
+  document.getElementById('sb-exp-cnt').textContent = exp;
+  document.getElementById('sb-ov-cnt').textContent  = od;
+  if(document.getElementById('od-total-label'))
+    document.getElementById('od-total-label').textContent = od+'건';
+}
+
+// ══════════════════════════════════════════════════════
+// 만료임박 / 연체 리스트
+// ══════════════════════════════════════════════════════
+function buildExpList() {
+  const list = CUSTS.filter(c=>c.status==='expiring').sort((a,b)=>a.days-b.days);
+  const el = document.getElementById('exp-list');
+  el.innerHTML = list.length ? list.map(c=>`
+    <div class="el-item">
+      <div class="el-av" style="background:var(--ybg)">⏰</div>
+      <div class="el-info"><div class="el-name">${c.name||'—'}</div><div class="el-unit">${c.units} · ${c.type}</div></div>
+      <div class="el-right"><div class="el-days" style="color:var(--yellow)">D-${c.days}</div><button class="el-send" onclick="alert('${c.name||'고객'}님 알림 발송!')">알림</button></div>
+    </div>`).join('')
+    : '<p style="font-size:13px;color:#aaa;text-align:center;padding:20px">만료 임박 계약 없음</p>';
+
+  const tb = document.getElementById('exp-tbody');
+  if(tb) tb.innerHTML = list.map(c=>`<tr>
+    <td class="mono">${c.units}</td><td>${c.name||'—'}</td>
+    <td class="mono" style="font-size:11px">${c.phone}</td><td>${c.type}</td>
+    <td class="mono" style="font-size:11px">${c.end}</td>
+    <td style="color:var(--yellow);font-weight:700;font-family:'Space Mono',monospace">D-${c.days}</td>
+    <td><button style="font-size:11px;padding:3px 8px;border-radius:5px;background:var(--navy);color:#fff;border:none;cursor:pointer" onclick="alert('${c.name||'고객'}님 알림!')">알림</button></td>
+  </tr>`).join('');
+}
+
+function buildOdList() {
+  const list = CUSTS.filter(c=>c.status==='overdue').sort((a,b)=>a.days-b.days);
+  const el = document.getElementById('od-list');
+  if(document.getElementById('od-summary'))
+    document.getElementById('od-summary').textContent = list.length+'건';
+  el.innerHTML = list.length ? list.map(c=>{
+    const d=Math.abs(c.days);
+    const extra=d>=30?'물품처분 가능':d>=15?'+20% 요금':'연체중';
+    return`<div class="el-item">
+      <div class="el-av" style="background:var(--rbg)">🔴</div>
+      <div class="el-info"><div class="el-name">${c.name||'—'}</div><div class="el-unit">${c.units} · ${c.type}</div></div>
+      <div class="el-right"><div class="el-days" style="color:var(--red)">+${d}일</div><div style="font-size:10px;color:var(--red);font-weight:700">${extra}</div></div>
+    </div>`;
+  }).join('')
+    : '<p style="font-size:13px;color:#aaa;text-align:center;padding:20px">연체 계약 없음</p>';
+
+  const tb = document.getElementById('od-tbody');
+  if(tb) tb.innerHTML = list.map(c=>{
+    const d=Math.abs(c.days);
+    const extra=d>=30?'<span class="bdg r">물품처분</span>':d>=15?'<span class="bdg y">+20%</span>':'<span class="bdg y">연체</span>';
+    return`<tr><td class="mono">${c.units}</td><td>${c.name||'—'}</td>
+      <td class="mono" style="font-size:11px">${c.phone}</td><td>${c.type}</td>
+      <td class="mono" style="font-size:11px">${c.end}</td>
+      <td style="color:var(--red);font-weight:700;font-family:'Space Mono',monospace">+${d}일</td>
+      <td>${extra}</td>
+      <td><button style="font-size:11px;padding:3px 8px;border-radius:5px;background:var(--red);color:#fff;border:none;cursor:pointer" onclick="alert('${c.name||'고객'}님 연체 알림!')">알림</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+// 고객 테이블
+// ══════════════════════════════════════════════════════
+function buildCustTable(filter) {
+  const list = filter ? CUSTS.filter(c=>
+    c.units.toLowerCase().includes(filter.toLowerCase()) ||
+    (c.name&&c.name.includes(filter)) ||
+    (c.phone&&c.phone.includes(filter))
+  ) : CUSTS;
+  const sorted = [...list].sort((a,b)=>(a.days||999)-(b.days||999));
+  document.getElementById('cust-count').textContent = `(${sorted.length}건)`;
+  document.getElementById('cust-tbody').innerHTML = sorted.map(c=>{
+    const tagCls = c.status==='overdue'?'overdue':c.status==='expiring'?'expiring':c.status==='active'?'active':'avail';
+    const tagTxt = c.status==='overdue'?`연체 ${Math.abs(c.days)}일`:c.status==='expiring'?`D-${c.days}`:'이용중';
+    const dStr   = c.days!==null?(c.days<0?`+${Math.abs(c.days)}`:`D-${c.days}`):'—';
+    const dColor = c.status==='overdue'?'var(--red)':c.status==='expiring'?'var(--yellow)':'var(--green)';
+    return`<tr onclick="showUnit('${c.units.split(',')[0].trim()}','m1');showPage('dashboard',document.querySelector('.ptab'))">
+      <td class="mono" style="font-weight:700">${c.units}</td>
+      <td><strong>${c.name||'—'}</strong></td>
+      <td class="mono" style="font-size:11px">${c.phone}</td>
+      <td>${c.type}</td>
+      <td class="mono" style="font-size:11px">${c.end||'—'}</td>
+      <td style="font-weight:700;color:${dColor};font-family:'Space Mono',monospace">${dStr}</td>
+      <td><span class="tag ${tagCls}">${tagTxt}</span></td>
+      <td style="font-size:11px">${c.pay||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+function filterCusts(v){buildCustTable(v);}
+
+// ══════════════════════════════════════════════════════
+// 종료고객
+// ══════════════════════════════════════════════════════
+async function loadEndedData() {
+  try {
+    const rows = await fetchSheet('종료고객');
+    ENDED_ALL = rows.map(row=>{
+      if(!row.c||!row.c[0]||!row.c[0].v) return null;
+      return {unit:rv(row,0),type:rv(row,1),name:rv(row,3),phone:rv(row,4),start:rv(row,5),end:rv(row,6),days:rv(row,7),amount:rv(row,8),pay:rv(row,10),memo:rv(row,11)};
+    }).filter(Boolean);
+    buildEndedTable(ENDED_ALL);
+  } catch(e) {
+    document.getElementById('ended-loading').innerHTML='<p style="color:#aaa;padding:20px;font-size:13px">데이터를 불러오지 못했습니다.</p>';
+  }
+}
+function buildEndedTable(list) {
+  document.getElementById('ended-loading').style.display='none';
+  document.getElementById('ended-table-wrap').style.display='block';
+  document.getElementById('ended-count').textContent=`(총 ${list.length}건)`;
+  document.getElementById('ended-tbody').innerHTML=list.map((c,i)=>`
+    <tr style="${i%2?'background:var(--sur2)':''}">
+      <td class="mono" style="font-weight:700">${c.unit}</td><td>${c.type}</td>
+      <td><strong>${c.name||'—'}</strong></td>
+      <td class="mono" style="font-size:11px">${c.phone}</td>
+      <td class="mono" style="font-size:11px">${c.start}</td>
+      <td class="mono" style="font-size:11px">${c.end}</td>
+      <td style="text-align:center">${c.days?c.days+'일':'—'}</td>
+      <td style="text-align:right">${c.amount?parseInt(String(c.amount).replace(/,/g,'')).toLocaleString()+'원':'—'}</td>
+      <td style="font-size:11px">${c.pay||'—'}</td>
+      <td style="font-size:11px;color:var(--muted)">${c.memo||''}</td>
+    </tr>`).join('');
+}
+function filterEnded(v){
+  if(!v){buildEndedTable(ENDED_ALL);return;}
+  const q=v.toLowerCase();
+  buildEndedTable(ENDED_ALL.filter(c=>(c.unit&&c.unit.toLowerCase().includes(q))||(c.name&&c.name.toLowerCase().includes(q))||(c.phone&&c.phone.includes(q))));
+}
+
+// ══════════════════════════════════════════════════════
+// 전체 새로고침
+// ══════════════════════════════════════════════════════
+function refreshAll() {
+  buildKPI();
+  renderAdminMap('admin-map','m1');
+  buildExpList();
+  buildOdList();
+  buildCustTable();
+}
+
+// ══════════════════════════════════════════════════════
+// 페이지 전환
+// ══════════════════════════════════════════════════════
+function showPage(id, triggerEl) {
+  document.querySelectorAll('.page-section').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.ptab,.sb-item').forEach(el=>el.classList.remove('on'));
+  document.getElementById('page-'+id).classList.add('on');
+  if(triggerEl) triggerEl.classList.add('on');
+  const titles={dashboard:'운영 현황 대시보드',floormap:'창고 배치도',customers:'고객 관리',expiry:'계약 만료 관리',overdue:'연체 관리',ended:'종료 고객 이력'};
+  document.getElementById('tb-ttl').textContent=titles[id]||id;
+  if(id==='floormap') setTimeout(()=>renderAdminMap('admin-map2','m2'),50);
+  if(id==='ended'&&ENDED_ALL.length===0) loadEndedData();
+  closeSB();
+}
+function toggleSB(){const sb=document.getElementById('sb');const ov=document.getElementById('sb-ov');const o=sb.classList.toggle('open');ov.classList.toggle('on',o);document.body.style.overflow=o?'hidden':'';}
+function closeSB(){document.getElementById('sb').classList.remove('open');document.getElementById('sb-ov').classList.remove('on');document.body.style.overflow='';}
+
+// 고객 수정 (간단 버전)
+let editIdx=-1;
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('on');document.body.style.overflow='';}
+function saveEdit(){closeEditModal();buildCustTable();alert('✅ 수정 완료! 구글 시트에도 동일하게 업데이트해주세요.');}
+</script>
+</body>
+</html>

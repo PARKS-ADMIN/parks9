@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>무인셀프창고 파크스</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1a2870;--navy2:#111d5e;--bg:#f2f4fb;
+  --avail:#22c55e;--avail-bg:#dcfce7;
+  --occ:#1e40af;--occ-bg:#dbeafe;
+  --exp:#d97706;--exp-bg:#fef3c7;
+  --over:#dc2626;--over-bg:#fee2e2;
+  --pillar:#cbd5e1;--border:#e0e4f0;
+  --sel1:#15803d;--sel2:#b45309;--sel3:#7c3aed;--sel4:#c2410c;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-height:100dvh}
+
+/* HEADER */
+.hd{background:var(--navy);color:#fff;padding:0 18px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.hd-logo{display:flex;align-items:center;gap:10px}
+.hd-ico{width:32px;height:32px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.hd-txt{font-size:14px;font-weight:900}.hd-sub{font-size:9px;color:rgba(255,255,255,.5);font-weight:400;margin-top:1px}
+.btn-login{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+
+/* STATS */
+.stats{background:var(--navy2);display:flex;overflow-x:auto;scrollbar-width:none}
+.stats::-webkit-scrollbar{display:none}
+.st{flex:1;min-width:72px;padding:8px 6px;text-align:center;border-right:1px solid rgba(255,255,255,.07)}
+.st:last-child{border-right:none}
+.sv{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;color:#fff;line-height:1}
+.sl{font-size:9px;color:rgba(255,255,255,.38);margin-top:2px}
+
+/* LEGEND */
+.legend{background:#fff;border-bottom:1px solid var(--border);padding:9px 14px;display:flex;gap:7px;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:4px;font-size:11px;color:#555;white-space:nowrap}
+.lc{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
+/* MODE TABS */
+.mode-bar{background:#fff;border-bottom:2px solid var(--border);padding:0;display:flex;overflow-x:auto;scrollbar-width:none}
+.mode-bar::-webkit-scrollbar{display:none}
+.mb{flex:1;min-width:80px;padding:10px 8px;text-align:center;font-size:12px;font-weight:500;color:#777;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;background:none;border-left:none;border-right:none;border-top:none}
+.mb.on{color:var(--navy);font-weight:800;border-bottom-color:var(--navy)}
+.mb-cnt{display:block;font-size:10px;color:#aaa;margin-top:2px;font-weight:400}
+.mb.on .mb-cnt{color:var(--navy);opacity:.6}
+
+/* SEL HINT */
+.sel-bar{display:none;background:#fffbeb;border-bottom:2px solid var(--exp);padding:8px 16px;align-items:center;gap:8px;font-size:12.5px;color:#92400e}
+.sel-bar.on{display:flex}
+.sel-clear{margin-left:auto;font-size:11px;color:#b45309;cursor:pointer;text-decoration:underline;white-space:nowrap;background:none;border:none;font-family:'Noto Sans KR',sans-serif}
+
+/* LAYOUT */
+.body{display:grid;grid-template-columns:1fr 300px}
+@media(max-width:860px){.body{grid-template-columns:1fr}}
+
+/* MAP */
+.map-wrap{padding:16px;overflow:auto}
+.map-ttl{font-size:12px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.map-box{background:#fff;border-radius:14px;border:2px solid #d0d5e8;padding:16px;display:inline-block;min-width:520px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.floor{display:flex;gap:7px;align-items:flex-start}
+.col{display:flex;flex-direction:column;gap:5px}
+.cl{font-family:'Space Mono',monospace;font-size:10px;color:#999;text-align:center;margin-bottom:4px;letter-spacing:.06em}
+
+/* UNIT */
+.u{border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .17s;position:relative;font-family:'Space Mono',monospace;border:2px solid transparent;user-select:none}
+.u:not(.pillar):not(.occ):hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.15);filter:brightness(1.05)}
+.u.pillar{background:var(--pillar);border-color:#b8bcc8;cursor:default}
+/* 상태별 색상 — H열 잔여일 기준 */
+.u.avail  {background:var(--avail-bg);border-color:#86efac;color:var(--avail)}
+.u.active {background:var(--occ-bg);border-color:#93c5fd;color:var(--occ)}
+.u.expiring{background:var(--exp-bg);border-color:#fde68a;color:var(--exp)}
+.u.overdue {background:var(--over-bg);border-color:#fca5a5;color:var(--over)}
+.u.s1{background:var(--sel1)!important;border-color:#166534!important;color:#fff!important;transform:translateY(-2px);box-shadow:0 4px 14px rgba(21,128,61,.4)!important;outline:3px solid #86efac;outline-offset:1px}
+.u.s2{background:var(--sel2)!important;border-color:#92400e!important;color:#fff!important;transform:translateY(-2px);box-shadow:0 4px 14px rgba(180,83,9,.4)!important;outline:3px solid #fde68a;outline-offset:1px}
+.u.s3{background:var(--sel3)!important;border-color:#5b21b6!important;color:#fff!important;transform:translateY(-2px);outline:3px solid #ddd6fe;outline-offset:1px}
+.u.s4{background:var(--sel4)!important;border-color:#9a3412!important;color:#fff!important;transform:translateY(-2px);outline:3px solid #fed7aa;outline-offset:1px}
+.uid{font-size:10px;font-weight:700;line-height:1.1;text-align:center}
+.utype{font-size:7.5px;opacity:.75;margin-top:1.5px;text-align:center}
+
+/* RIGHT PANEL */
+.rpanel{background:#fff;border-left:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:12px;overflow-y:auto;max-height:calc(100dvh - 200px);position:sticky;top:196px}
+@media(max-width:860px){.rpanel{display:none}}
+.pc{background:#f7f9fd;border-radius:10px;border:1px solid #e0e4f2;padding:13px}
+.pct{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#999;margin-bottom:11px}
+.pempty{text-align:center;padding:28px 10px;color:#c0c5d4}
+.pe-ico{font-size:32px;margin-bottom:8px}
+.sel-ids{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.sid{font-family:'Space Mono',monospace;font-size:12px;font-weight:700;padding:4px 10px;border-radius:7px;color:#fff}
+.drow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #eef;font-size:12.5px}
+.drow:last-child{border-bottom:none}
+.dk{color:#999}.dv{font-weight:600}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pb{padding:8px 4px;border-radius:8px;border:1.5px solid #dde;background:#fff;color:#666;font-size:11px;cursor:pointer;text-align:center;transition:all .13s;font-family:'Noto Sans KR',sans-serif}
+.pb.on{border-color:var(--navy);background:var(--navy);color:#fff;font-weight:700}
+.pb .pp{font-size:9px;color:#aaa;margin-top:1px}
+.pb.on .pp{color:rgba(255,255,255,.6)}
+.prow{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #eef;margin-top:10px}
+.pamt{font-family:'Space Mono',monospace;font-size:17px;font-weight:700;color:var(--navy)}
+.btn-rsv{width:100%;margin-top:10px;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
+.ni{display:flex;gap:8px;padding:6px 0;font-size:12px;color:#444;line-height:1.5;border-bottom:1px solid #eef}
+.ni:last-child{border-bottom:none}
+.nic{flex-shrink:0;font-size:14px}
+.warn{background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:9px 11px;margin-top:6px;font-size:11.5px;color:#9a3412;line-height:1.65}
+
+/* MOBILE SHEET */
+.ov{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);backdrop-filter:blur(4px)}
+.ov.on{display:block}
+.sheet{position:fixed;bottom:0;left:0;right:0;z-index:201;background:#fff;border-radius:20px 20px 0 0;border-top:2px solid var(--border);transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);padding:0 18px;padding-bottom:max(32px,env(safe-area-inset-bottom));max-height:82dvh;overflow-y:auto}
+.sheet.on{transform:translateY(0)}
+.sh{width:40px;height:4px;background:#ddd;border-radius:2px;margin:12px auto 14px}
+.sh-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sh-ttl{font-size:16px;font-weight:800}
+.sh-x{width:30px;height:30px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;color:#666;border:none}
+</style>
+</head>
+<body>
+<div class="hd">
+  <div class="hd-logo">
+    <div class="hd-ico">📦</div>
+    <div><div class="hd-txt">무인셀프창고 파크스</div><div class="hd-sub">PARKS SELF STORAGE</div></div>
+  </div>
+  <div><a href="tel:010-6464-1666" style="background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 13px;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;font-family:'Noto Sans KR',sans-serif">📞 010-6464-1666</a></div>
+</div>
+
+<div class="stats">
+  <div class="st"><div class="sv" id="sa">—</div><div class="sl">이용가능</div></div>
+  <div class="st"><div class="sv" id="so">—</div><div class="sl">사용중</div></div>
+  <div class="st"><div class="sv" id="sr">—</div><div class="sl">점유율</div></div>
+  <div class="st"><div class="sv" style="color:#38bdf8">29,000</div><div class="sl">하프룸~</div></div>
+  <div class="st"><div class="sv" style="color:#22c55e">59,000</div><div class="sl">원룸~</div></div>
+  <div class="st"><div class="sv" style="color:#f59e0b">99,000</div><div class="sl">투룸~</div></div>
+</div>
+
+<!-- 확인용 안내 배너 -->
+<div style="background:#fffbeb;border-bottom:2px solid #f59e0b;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+  <div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:#92400e;font-weight:600">
+    <span>📋</span>
+    <span>현재 창고 현황 <strong>확인용</strong> 페이지입니다. 예약 및 문의는 아래 연락처로 해주세요.</span>
+  </div>
+  <div style="display:flex;gap:8px">
+    <a href="tel:010-6464-1666" style="background:#1a2870;color:#fff;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap">📞 전화문의</a>
+    <a href="sms:010-6464-1666" style="background:#16a34a;color:#fff;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap">💬 문자문의</a>
+  </div>
+</div>
+
+<div class="legend">
+  <span class="leg"><span class="lc" style="background:var(--avail-bg);border:1px solid #86efac"></span>이용가능</span>
+  <span class="leg"><span class="lc" style="background:var(--occ-bg);border:1px solid #93c5fd"></span>사용중</span>
+  <span class="leg"><span class="lc" style="background:var(--exp-bg);border:1px solid #fde68a"></span>만료임박</span>
+  <span class="leg"><span class="lc" style="background:var(--over-bg);border:1px solid #fca5a5"></span>연체</span>
+  <span class="leg"><span class="lc" style="background:var(--pillar)"></span>기둥</span>
+</div>
+
+<div class="mode-bar" style="display:none">
+  <button class="mb" onclick="setMode('half',this)">하프룸<span class="mb-cnt">90×90×100</span></button>
+  <button class="mb on" onclick="setMode('single',this)">원룸 (1칸)<span class="mb-cnt">90×90×210</span></button>
+  <button class="mb" onclick="setMode('double',this)">투룸 (2칸)<span class="mb-cnt">180×90×210</span></button>
+  <button class="mb" onclick="setMode('triple',this)">쓰리룸 (3칸)<span class="mb-cnt">270×90×210</span></button>
+  <button class="mb" onclick="setMode('quad',this)">포룸 (4칸)<span class="mb-cnt">360×90×210</span></button>
+</div>
+
+<div class="sel-bar" id="sbar">
+  <span id="sbar-txt"></span>
+  <button class="sel-clear" onclick="clearSel()">✕ 초기화</button>
+</div>
+
+<div class="body">
+<div class="map-wrap">
+  <div class="map-ttl">📍 파크스 1호점 — 실시간 창고 현황 <span id="last-update" style="font-size:10px;color:#aaa;font-weight:400"></span></div>
+  <div class="map-box" id="mbox"></div>
+</div>
+<div class="rpanel" id="rpanel">
+  <div class="pc">
+    <div class="pct">선택한 창고</div>
+    <div class="pempty" id="pempty"><div class="pe-ico">📦</div><p style="font-size:12px;line-height:1.7">창고를 클릭하면<br>현황을 확인할 수 있습니다</p></div>
+    <div id="pdet" style="display:none"></div>
+  </div>
+  <div class="pc" id="pperiod" style="display:none!important">
+    <div class="pct">이용 기간</div>
+    <div class="pgrid" id="dpg"></div>
+    <div class="prow"><span style="font-size:12px;color:#999">총 결제금액</span><span class="pamt" id="dtot">—</span></div>
+    <button class="btn-rsv" onclick="doRsv()">지금 예약하기 →</button>
+  </div>
+  <div class="pc">
+    <div class="pct">이용 안내</div>
+    <div class="ni"><span class="nic">📹</span>CCTV 24시간 녹화 운영</div>
+    <div class="ni"><span class="nic">🔑</span>스마트폰 원격 출입 (24시간)</div>
+    <div class="ni"><span class="nic">🌡️</span>항온항습 자동 유지</div>
+    <div class="ni"><span class="nic">🚗</span>방문 차량 30분 무료 주차</div>
+    <div class="ni"><span class="nic">🚭</span>실내 금연 · 애완동물 입장 불가</div>
+    <div class="ni"><span class="nic">📞</span>고객센터 010-6464-1666</div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #eef">
+      <div style="font-size:11px;color:#999;font-weight:700;margin-bottom:8px">문의 / 예약</div>
+      <div style="display:flex;gap:8px">
+        <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--navy);color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">📞 전화문의</a>
+        <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:#16a34a;color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">💬 문자문의</a>
+      </div>
+    </div>
+    <div class="ni"><span class="nic">📞</span>고객센터 010-6464-1666</div>
+    <div class="warn">⚠️ <strong>연체 안내</strong><br>· 15일 이상: 수령 시 20% 추가<br>· 30일 이상: 통지 후 7일 유예, 물품처분 가능</div>
+  </div>
+</div>
+</div>
+
+<div class="ov" id="ov" onclick="closeSh()"></div>
+<div class="sheet" id="sheet">
+  <div class="sh"></div>
+  <div class="sh-hd"><div class="sh-ttl" id="shttl"></div><button class="sh-x" onclick="closeSh()">✕</button></div>
+  <div id="shbody"></div>
+</div>
+
+<script>
+// ── 구글 시트 설정 ───────────────────────────────────
+const SHEET_ID = '1Cs_Ol94VqEauRx3GTim1q2Sz25eIvnM0q7xBeKzBFMA';
+const SHEET_NAME = '창고목록';
+
+// ── 가격표 ─────────────────────────────────────────
+const PR={half:{1:29000,3:78000,6:139000,12:244000},single:{1:59000,3:159000,6:283000,12:496000},double:{1:99000,3:267000,6:475000,12:832000},triple:{1:139000,3:375000,6:667000,12:1165000},quad:{1:189000,3:510000,6:907000,12:1588000}};
+const TL={half:'하프룸',single:'원룸',double:'투룸',triple:'쓰리룸',quad:'포룸'};
+const TS={half:'90×90×100cm',single:'90×90×210cm',double:'180×90×210cm',triple:'270×90×210cm',quad:'360×90×210cm'};
+const MX={half:1,single:1,double:2,triple:3,quad:4};
+
+// ── 창고 상태 데이터 (구글 시트에서 로드) ─────────────
+// status: 'avail' | 'active' | 'expiring' | 'overdue'
+let UNIT_STATUS = {}; // {창고번호: status}
+
+// ── 레이아웃 ──────────────────────────────────────
+const S=48,H=21,G=5;
+const COLS={
+  H:[{id:'H12'},{id:'H11'},{id:'H10'},{id:'H09'},{pillar:1},{id:'H08'},{id:'H07'},{id:'H06'},{id:'H05'},{pillar:1},{id:'H04'},{id:'H03'},{id:'H02'},{id:'H01'}],
+  G:[{id:'G13'},{id:'G12'},{id:'G11'},{id:'G10'},{id:'G09'},{id:'G08'},{id:'G07'},{id:'G06'},{id:'G05'},{id:'G04'},{id:'G03'},{id:'G02'},{id:'G01'}],
+  F:[{id:'F13'},{id:'F12'},{id:'F11'},{id:'F10'},{id:'F09'},{id:'F08'},{id:'F07'},{id:'F06'},{id:'F05'},{id:'F04'},{id:'F03'},{id:'F02'},{id:'F01'}],
+  E:[{id:'E14'},{id:'E13'},{id:'E12'},{id:'E11'},{pillar:1},{id:'E09'},{id:'E08'},{id:'E07'},{id:'E06'},{id:'E05'},{pillar:1},{id:'E03'},{id:'E02'},{id:'E01'}],
+  D:[{id:'D11'},{id:'D10'},{id:'D09'},{id:'D08'},{gap:1},{id:'D07'},{id:'D06'},{id:'D05'},{id:'D04'},{id:'D03'},{gap:1},{gap:1},{id:'D02'},{id:'D01'}],
+  C:[{id:'C14'},{id:'C13'},{id:'C12'},{id:'C11'},{id:'C10'},{id:'C09'},{id:'C08'},{id:'C07'},{id:'C06'},{id:'C05'},{id:'C04'},{id:'C03'},{id:'C02'},{id:'C01'}],
+  B:[{id:'B14'},{id:'B13'},{id:'B12'},{id:'B11'},{id:'B10'},{id:'B09'},{id:'B08'},{id:'B07'},{id:'B06'},{id:'B05'},{id:'B04'},{id:'B03'},{id:'B02'},{id:'B01'}],
+};
+const APAIRS=[['A21','A22'],['A19','A20'],['A17','A18'],['A15','A16'],null,['A13','A14'],['A11','A12'],['A09','A10'],['A07','A08'],null,['A05','A06'],['A03','A04'],['A01','A02']];
+const IROW=['I04','I03','I02','I01'];
+
+let mode='single', sels=[], selM=1;
+
+function isHalf(id){return id&&id.startsWith('A')}
+function selIdx(id){return sels.indexOf(id)}
+
+// H열 잔여일 숫자 → 상태 변환
+function daysToStatus(days){
+  if(days===null||days===undefined||days==='') return 'avail';
+  const d = Number(days);
+  if(isNaN(d)) return 'avail';
+  if(d<0) return 'overdue';
+  if(d<=14) return 'expiring';
+  return 'active';
+}
+
+// ── 구글 시트 데이터 로드 ────────────────────────────
+async function loadSheetData(){
+  try{
+    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`;
+    const res=await fetch(url);
+    const text=await res.text();
+    const json=JSON.parse(text.substring(47,text.length-2));
+    const rows=json.table.rows;
+    const newStatus={};
+    rows.forEach(row=>{
+      if(!row.c||!row.c[0]||!row.c[0].v) return;
+      const id=String(row.c[0].v).trim();
+      // H열(index 7) = 잔여일 숫자값
+      const daysRaw = row.c[7]&&row.c[7].v!=null ? row.c[7].v : null;
+      newStatus[id] = daysToStatus(daysRaw);
+    });
+    if(Object.keys(newStatus).length>0){
+      UNIT_STATUS=newStatus;
+      renderMap();
+      updateStats();
+      const now=new Date();
+      document.getElementById('last-update').textContent=`갱신 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+    }
+  }catch(e){
+    console.warn('구글 시트 연동 실패:', e.message);
+  }
+}
+loadSheetData();
+setInterval(loadSheetData, 30000);
+
+// ── 렌더링 ───────────────────────────────────────
+function getUnitCls(id){
+  const st = UNIT_STATUS[id] || 'avail';
+  const si = selIdx(id);
+  if(si>=0) return `u s${si+1}`;
+  return `u ${st}`;
+}
+function isOcc(id){ const st=UNIT_STATUS[id]||'avail'; return st!=='avail'; }
+
+function dimCheck(id){
+  const t=isHalf(id)?'half':'single';
+  if(mode==='half'&&t!=='half') return true;
+  if(mode!=='half'&&t==='half') return true;
+  return false;
+}
+
+function cell(id,w,h){
+  if(!id) return`<div style="width:${w}px;height:${h}px"></div>`;
+  const occ=isOcc(id), si=selIdx(id);
+  const dim=dimCheck(id);
+  const cls=getUnitCls(id)+(dim?' mdim':'');
+  const clickable=!occ&&!dim;
+  const style=`width:${w}px;height:${h}px`;
+  return`<div class="${cls}" ${clickable?`onclick="pick('${id}')"`:''}  style="${style}"><div class="uid">${id}</div>${h>=40?`<div class="utype">${isHalf(id)?'하프':'원룸'}</div>`:''}</div>`;
+}
+function pillarCell(w,h){return`<div class="u pillar" style="width:${w}px;height:${h}px"><span style="font-size:9px;color:#aaa">✕</span></div>`}
+
+function renderCol(key){
+  let h=`<div class="col"><div class="cl">${key}</div>`;
+  COLS[key].forEach(c=>{
+    if(c.pillar) h+=pillarCell(S,S);
+    else if(c.gap) h+=`<div style="width:${S}px;height:${S}px"></div>`;
+    else h+=cell(c.id,S,S);
+  });
+  return h+'</div>';
+}
+
+function renderMap(){
+  const mb=document.getElementById('mbox');
+  let h=`<div class="floor">`;
+  h+=renderCol('H');
+  h+=`<div style="width:8px"></div>`;
+  h+=`<div style="display:flex;gap:${G}px">${renderCol('G')}${renderCol('F')}</div>`;
+  h+=`<div style="width:6px"></div>`;
+  h+=`<div style="display:flex;gap:${G}px">${renderCol('E')}${renderCol('D')}</div>`;
+  h+=`<div style="width:6px"></div>`;
+  h+=`<div style="display:flex;gap:${G}px">${renderCol('C')}${renderCol('B')}</div>`;
+  h+=`<div style="width:8px"></div>`;
+  // A열
+  h+=`<div class="col"><div class="cl">A</div>`;
+  APAIRS.forEach(p=>{
+    if(!p){h+=pillarCell(S*2+4,S);return;}
+    const[l,r]=p;
+    h+=`<div style="display:flex;flex-direction:column;gap:3px">`;
+    if(l){const cls=getUnitCls(l)+(dimCheck(l)?' mdim':'');const occ=isOcc(l);h+=`<div class="${cls}" ${!occ&&!dimCheck(l)?`onclick="pick('${l}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${l}</div></div>`;}
+    if(r){const cls=getUnitCls(r)+(dimCheck(r)?' mdim':'');const occ=isOcc(r);h+=`<div class="${cls}" ${!occ&&!dimCheck(r)?`onclick="pick('${r}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${r}</div></div>`;}
+    h+=`</div>`;
+  });
+  h+=`</div></div>`;
+  // I열
+  h+=`<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #d0d5e8;display:flex;align-items:center;gap:${G}px">`;
+  h+=`<span style="font-family:'Space Mono',monospace;font-size:9px;color:#aaa;margin-right:4px">I동</span>`;
+  IROW.forEach(id=>h+=cell(id,S,S));
+  h+=`</div>`;
+  h+=`<div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px dashed #d0d5e8;font-size:10px;color:#aaa"><span>🔴 현위치 | 🚶 메인 출입구</span><span>🚗 주차장 출입구 →</span></div>`;
+  mb.innerHTML=h;
+}
+
+function updateStats(){
+  const all=[];
+  Object.values(COLS).forEach(arr=>arr.forEach(c=>{if(c.id)all.push(c.id)}));
+  APAIRS.forEach(p=>{if(p)p.forEach(id=>{if(id)all.push(id)})});
+  IROW.forEach(id=>all.push(id));
+  const occ=all.filter(id=>isOcc(id)).length;
+  document.getElementById('sa').textContent=all.length-occ;
+  document.getElementById('so').textContent=occ;
+  document.getElementById('sr').textContent=Math.round(occ/all.length*100)+'%';
+}
+
+// ── 선택 ───────────────────────────────────────
+function pick(id){
+  const si=selIdx(id);
+  if(si>=0){sels=sels.filter(x=>x!==id);}
+  else{sels=[id];} // 단일 선택만
+  selM=1;renderMap();updatePanel();
+}
+function clearSel(){sels=[];selM=1;renderMap();updatePanel();}
+function setMode(m,btn){
+  mode=m;sels=[];selM=1;
+  document.querySelectorAll('.mb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderMap();updatePanel();
+}
+function updateHint(){
+  const max=MX[mode],n=sels.length,bar=document.getElementById('sbar');
+  if(max===1){bar.classList.remove('on');return;}
+  bar.classList.add('on');
+  const t=document.getElementById('sbar-txt');
+  if(n===0) t.innerHTML=`<strong>${TL[mode]}</strong>: 이용 가능한 창고를 ${max}칸 클릭해 선택하세요`;
+  else if(n<max) t.innerHTML=`<strong>${n}/${max}칸 선택됨</strong> — ${max-n}칸 더 선택하세요`;
+  else t.innerHTML=`<strong>${TL[mode]} ${max}칸 선택 완료!</strong> 기간과 요금을 확인하세요`;
+}
+
+function periodHTML(type,pgId,totId){
+  return[[1,'1개월'],[3,'3개월'],[6,'6개월'],[12,'12개월']].map(([m,l],i)=>
+    `<button class="pb${i===0?' on':''}" onclick="setP(${m},'${type}','${pgId}','${totId}')">${l}<div class="pp">${PR[type][m].toLocaleString()}원</div></button>`
+  ).join('');
+}
+function setP(m,t,pgId,totId){
+  selM=m;
+  document.querySelectorAll(`#${pgId} .pb`).forEach((b,i)=>b.classList.toggle('on',[1,3,6,12][i]===m));
+  const el=document.getElementById(totId);if(el)el.textContent=PR[t][m].toLocaleString()+'원';
+}
+function updatePanel(){
+  const n=sels.length;
+  if(n===0){
+    document.getElementById('pempty').style.display='block';
+    document.getElementById('pdet').style.display='none';
+    return;
+  }
+  document.getElementById('pempty').style.display='none';
+  const id=sels[0];
+  const st=UNIT_STATUS[id]||'avail';
+  const stTxt=st==='avail'?'🟢 이용가능':st==='active'?'🔵 사용중':st==='expiring'?'🟡 만료임박':'🔴 연체';
+  const pd=document.getElementById('pdet');pd.style.display='block';
+  pd.innerHTML=`
+    <div style="text-align:center;padding:12px 0 8px">
+      <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--navy)">${id}</div>
+      <div style="font-size:13px;margin-top:6px">${stTxt}</div>
+      ${st==='avail'?`<div style="margin-top:14px;font-size:12px;color:#666;line-height:1.7">이용 가능한 창고입니다.<br>문의/예약은 아래 연락처로 해주세요.</div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:var(--navy);color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">📞 전화</a>
+        <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:#16a34a;color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">💬 문자</a>
+      </div>`
+      :`<div style="margin-top:10px;font-size:12px;color:#888">현재 사용중인 창고입니다.</div>`}
+    </div>`;
+}
+function closeSh(){document.getElementById('ov').classList.remove('on');document.getElementById('sheet').classList.remove('on');document.body.style.overflow='';}
+function doRsv(){alert('로그인 후 예약이 완료됩니다.\n\n창고: '+sels.join(', ')+'\n타입: '+TL[mode]);}
+
+// CSS — dim
+const style=document.createElement('style');
+style.textContent=`.mdim{opacity:.15;pointer-events:none!important;cursor:default!important}`;
+document.head.appendChild(style);
+
+renderMap();updateStats();
+</script>
+</body>
+</html>
