@@ -182,6 +182,54 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
     <button class="btn-rsv" onclick="doRsv()">지금 예약하기 →</button>
   </div>
   <div class="pc">
+    <div class="pct">창고 타입 안내</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="background:#f8f9fc;border-radius:8px;border:1px solid #e8ecf6;padding:9px 11px;display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:#dcfce7;border:1.5px solid #4ade80;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:900;color:#14532d;text-align:center;line-height:1.2">하프<br>룸</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:800;color:#111">하프룸</div>
+          <div style="font-size:10px;color:#888;margin-top:1px">90×90×100cm</div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--navy)">29,000원~</div>
+      </div>
+      <div style="background:#f8f9fc;border-radius:8px;border:1px solid #e8ecf6;padding:9px 11px;display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:#dbeafe;border:1.5px solid #60a5fa;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:900;color:#1e40af;text-align:center;line-height:1.2">원<br>룸</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:800;color:#111">원룸</div>
+          <div style="font-size:10px;color:#888;margin-top:1px">90×90×210cm</div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--navy)">59,000원~</div>
+      </div>
+      <div style="background:#f8f9fc;border-radius:8px;border:1px solid #e8ecf6;padding:9px 11px;display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:#ede9fe;border:1.5px solid #c4b5fd;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:900;color:#6d28d9;text-align:center;line-height:1.2">투<br>룸</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:800;color:#111">투룸</div>
+          <div style="font-size:10px;color:#555;margin-top:1px">180×90×210cm</div>
+          <div style="font-size:10px;color:#7c3aed;margin-top:2px;font-weight:600">원룸 2칸 격벽 제거 사용</div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--navy)">99,000원~</div>
+      </div>
+      <div style="background:#f8f9fc;border-radius:8px;border:1px solid #e8ecf6;padding:9px 11px;display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:#fef3c7;border:1.5px solid #fde68a;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:900;color:#92400e;text-align:center;line-height:1.2">쓰리<br>룸</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:800;color:#111">쓰리룸</div>
+          <div style="font-size:10px;color:#555;margin-top:1px">270×90×210cm</div>
+          <div style="font-size:10px;color:#d97706;margin-top:2px;font-weight:600">원룸 3칸 격벽 제거 사용</div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--navy)">139,000원~</div>
+      </div>
+      <div style="background:#f8f9fc;border-radius:8px;border:1px solid #e8ecf6;padding:9px 11px;display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;background:#fee2e2;border:1.5px solid #fca5a5;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:900;color:#991b1b;text-align:center;line-height:1.2">포<br>룸</div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:800;color:#111">포룸</div>
+          <div style="font-size:10px;color:#555;margin-top:1px">360×90×210cm</div>
+          <div style="font-size:10px;color:#dc2626;margin-top:2px;font-weight:600">원룸 4칸 격벽 제거 사용</div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--navy)">189,000원~</div>
+      </div>
+    </div>
+  </div>
+  <div class="pc">
     <div class="pct">이용 안내</div>
     <div class="ni"><span class="nic">📹</span>CCTV 24시간 녹화 운영</div>
     <div class="ni"><span class="nic">🔑</span>스마트폰 원격 출입 (24시간)</div>
@@ -403,14 +451,24 @@ function openMobileSheet(id){
           .join('')}
       </div>`;
 
-  // 창고 타입 안내 (간략)
+  // 창고 타입 안내
   b+=`<div style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.1em;margin-bottom:8px">창고 타입 & 요금</div>
       <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px">
-        ${[['하프룸','90×90×100cm','29,000'],['원룸','90×90×210cm','59,000'],['투룸','180×90×210cm','99,000'],['쓰리룸','270×90×210cm','139,000'],['포룸','360×90×210cm','189,000']]
-          .map(([nm,sz,pr])=>`<div style="display:flex;justify-content:space-between;align-items:center;background:#f8f9fc;border-radius:8px;padding:8px 12px;font-size:12.5px">
-            <span style="font-weight:700;color:#1a2870">${nm}</span>
-            <span style="color:#777">${sz}</span>
-            <span style="font-weight:700;color:var(--navy)">${pr}원~</span>
+        ${[
+          ['하프룸','90×90×100cm','29,000','','#dcfce7','#4ade80','#14532d'],
+          ['원룸','90×90×210cm','59,000','','#dbeafe','#60a5fa','#1e40af'],
+          ['투룸','180×90×210cm','99,000','원룸 2칸 격벽 제거 사용','#ede9fe','#c4b5fd','#6d28d9'],
+          ['쓰리룸','270×90×210cm','139,000','원룸 3칸 격벽 제거 사용','#fef3c7','#fde68a','#92400e'],
+          ['포룸','360×90×210cm','189,000','원룸 4칸 격벽 제거 사용','#fee2e2','#fca5a5','#991b1b']
+        ].map(([nm,sz,pr,desc,bg,bd,tc])=>`
+          <div style="background:#f8f9fc;border-radius:9px;border:1px solid #e8ecf6;padding:10px 12px;display:flex;align-items:center;gap:10px">
+            <div style="width:34px;height:34px;background:${bg};border:1.5px solid ${bd};border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:900;color:${tc};text-align:center;line-height:1.2">${nm.length<=2?nm+'<br>룸':nm.replace('룸','<br>룸')}</div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:800;color:#111">${nm}</div>
+              <div style="font-size:11px;color:#888">${sz}</div>
+              ${desc?`<div style="font-size:11px;color:${tc};font-weight:600;margin-top:2px">✂️ ${desc}</div>`:''}
+            </div>
+            <div style="font-size:12px;font-weight:700;color:var(--navy);white-space:nowrap">${pr}원~</div>
           </div>`)
           .join('')}
       </div>`;
