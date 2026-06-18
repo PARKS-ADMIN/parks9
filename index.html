@@ -335,9 +335,9 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 </div>
 
 <script>
-// ── 구글 시트 설정 ───────────────────────────────────
-const SHEET_ID = '1Cs_Ol94VqEauRx3GTim1q2Sz25eIvnM0q7xBeKzBFMA';
-const SHEET_NAME = '창고목록';
+// ── Supabase 설정 ───────────────────────────────────
+const SUPABASE_URL = 'https://zsiklzhtotlaozuxdumb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_y1jh83wxGBH6Xp0PcIxhwQ_Kr03Ibeb';
 
 // ── 가격표 ─────────────────────────────────────────
 const PR={half:{1:29000,3:78000,6:139000,12:244000},single:{1:59000,3:159000,6:283000,12:496000},double:{1:99000,3:267000,6:475000,12:832000},triple:{1:139000,3:375000,6:667000,12:1165000},quad:{1:189000,3:510000,6:907000,12:1588000}};
@@ -376,21 +376,18 @@ function daysToStatus(days){
   return 'active';
 }
 
-// ── 구글 시트 데이터 로드 ────────────────────────────
+// ── Supabase 데이터 로드 ────────────────────────────
 async function loadSheetData(){
   try{
-    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}&t=${Date.now()}`;
-    const res=await fetch(url);
-    const text=await res.text();
-    const json=JSON.parse(text.substring(47,text.length-2));
-    const rows=json.table.rows;
+    const url=`${SUPABASE_URL}/rest/v1/warehouses?select=unit_no,status,days_left&order=unit_no`;
+    const res=await fetch(url,{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+    const rows=await res.json();
     const newStatus={};
-    rows.forEach(row=>{
-      if(!row.c||!row.c[0]||!row.c[0].v) return;
-      const id=String(row.c[0].v).trim();
-      // H열(index 7) = 잔여일 숫자값
-      const daysRaw = row.c[7]&&row.c[7].v!=null ? row.c[7].v : null;
-      newStatus[id] = daysToStatus(daysRaw);
+    rows.forEach(r=>{
+      if(!r.unit_no) return;
+      const id=String(r.unit_no).trim();
+      // 상태: DB의 status가 '사용중'이면 active, 아니면 avail
+      newStatus[id] = (r.status==='사용중') ? 'active' : 'avail';
     });
     if(Object.keys(newStatus).length>0){
       UNIT_STATUS=newStatus;
@@ -400,7 +397,7 @@ async function loadSheetData(){
       document.getElementById('last-update').textContent=`갱신 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
     }
   }catch(e){
-    console.warn('구글 시트 연동 실패:', e.message);
+    console.warn('Supabase 연동 실패:', e.message);
   }
 }
 loadSheetData();

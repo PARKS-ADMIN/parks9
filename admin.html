@@ -5,34 +5,76 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>파크스 관리자</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
-const ADMIN_PW='0100';
-(function(){
-  if(sessionStorage.getItem('parks_auth')===ADMIN_PW)return;
-  document.addEventListener('DOMContentLoaded',function(){
-    document.body.style.display='none';
-    const ov=document.createElement('div');
-    ov.id='login-overlay';
-    ov.style.cssText='position:fixed;inset:0;background:#0f1420;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:"Noto Sans KR",sans-serif';
-    ov.innerHTML=`<div style="background:#1e2230;border-radius:16px;padding:36px 32px;width:320px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5)">
-      <div style="font-size:32px;margin-bottom:12px">🔐</div>
-      <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:4px">관리자 로그인</div>
-      <div style="font-size:12px;color:#6b7280;margin-bottom:24px">무인셀프창고 파크스</div>
-      <input id="pwi" type="password" placeholder="비밀번호 입력"
-        style="width:100%;padding:12px 14px;border-radius:9px;border:1.5px solid #2e3548;background:#131720;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box"
-        onkeydown="if(event.key==='Enter')chkPW()">
-      <button onclick="chkPW()" style="width:100%;padding:12px;background:#4f46e5;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">로그인</button>
-      <div id="pwe" style="color:#ef4444;font-size:12px;margin-top:10px;display:none">비밀번호가 올바르지 않습니다.</div>
-    </div>`;
-    document.body.parentNode.insertBefore(ov,document.body);
-    document.body.style.display='';
-    setTimeout(()=>document.getElementById('pwi').focus(),100);
-  });
-})();
-function chkPW(){
-  const v=document.getElementById('pwi').value;
-  if(v===ADMIN_PW){sessionStorage.setItem('parks_auth',ADMIN_PW);document.getElementById('login-overlay').remove();}
-  else{document.getElementById('pwe').style.display='block';document.getElementById('pwi').value='';document.getElementById('pwi').focus();}
+// ── Supabase 인증 클라이언트 ──
+const SB_URL = 'https://zsiklzhtotlaozuxdumb.supabase.co';
+const SB_ANON = 'sb_publishable_y1jh83wxGBH6Xp0PcIxhwQ_Kr03Ibeb';
+let sbClient = null;
+let sbToken = null; // 로그인 후 발급되는 액세스 토큰
+
+function initAuth(){
+  sbClient = supabase.createClient(SB_URL, SB_ANON);
+}
+
+// 페이지 로드 시: 기존 로그인 세션 확인
+document.addEventListener('DOMContentLoaded', async function(){
+  initAuth();
+  const { data:{ session } } = await sbClient.auth.getSession();
+  if(session){
+    sbToken = session.access_token;
+    // 이미 로그인됨 → 화면 그대로
+  } else {
+    showLogin();
+  }
+});
+
+function showLogin(){
+  document.body.style.display='none';
+  const ov=document.createElement('div');
+  ov.id='login-overlay';
+  ov.style.cssText='position:fixed;inset:0;background:#0f1420;display:flex;align-items:center;justify-content:center;z-index:9999;font-family:"Noto Sans KR",sans-serif';
+  ov.innerHTML=`<div style="background:#1e2230;border-radius:16px;padding:36px 32px;width:340px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.5)">
+    <div style="font-size:32px;margin-bottom:12px">🔐</div>
+    <div style="font-size:18px;font-weight:800;color:#fff;margin-bottom:4px">관리자 로그인</div>
+    <div style="font-size:12px;color:#6b7280;margin-bottom:24px">무인셀프창고 파크스</div>
+    <input id="emi" type="email" placeholder="이메일" autocomplete="username"
+      style="width:100%;padding:12px 14px;border-radius:9px;border:1.5px solid #2e3548;background:#131720;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px;box-sizing:border-box">
+    <input id="pwi" type="password" placeholder="비밀번호" autocomplete="current-password"
+      style="width:100%;padding:12px 14px;border-radius:9px;border:1.5px solid #2e3548;background:#131720;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;box-sizing:border-box"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()" id="login-btn" style="width:100%;padding:12px;background:#4f46e5;color:#fff;border:none;border-radius:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">로그인</button>
+    <div id="pwe" style="color:#ef4444;font-size:12px;margin-top:10px;display:none"></div>
+  </div>`;
+  document.body.parentNode.insertBefore(ov,document.body);
+  document.body.style.display='';
+  setTimeout(()=>document.getElementById('emi').focus(),100);
+}
+
+async function doLogin(){
+  const email=document.getElementById('emi').value.trim();
+  const pw=document.getElementById('pwi').value;
+  const btn=document.getElementById('login-btn');
+  const err=document.getElementById('pwe');
+  if(!email||!pw){err.textContent='이메일과 비밀번호를 입력하세요.';err.style.display='block';return;}
+  btn.textContent='로그인 중...';btn.disabled=true;
+  const { data, error } = await sbClient.auth.signInWithPassword({ email, password: pw });
+  if(error){
+    err.textContent='이메일 또는 비밀번호가 올바르지 않습니다.';
+    err.style.display='block';
+    btn.textContent='로그인';btn.disabled=false;
+    return;
+  }
+  sbToken = data.session.access_token;
+  const ov=document.getElementById('login-overlay');
+  if(ov) ov.remove();
+  if(typeof loadAllData==='function') loadAllData();
+}
+
+async function doLogout(){
+  if(sbClient) await sbClient.auth.signOut();
+  location.reload();
 }
 </script>
 <style>
@@ -198,7 +240,10 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
     <div class="sb-sec">통계</div>
     <a href="https://analytics.naver.com" target="_blank" class="sb-item" style="text-decoration:none;color:inherit"><span class="sb-ic">👥</span>방문자 통계 <span style="font-size:9px;background:#03c75a;color:#fff;padding:2px 5px;border-radius:4px;margin-left:2px">NAVER</span></a>
   </nav>
-  <div class="sb-ft">파크스 관리자 시스템</div>
+  <div class="sb-ft" style="display:flex;flex-direction:column;gap:8px">
+    <button onclick="doLogout()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:8px;border-radius:7px;font-size:11px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">🚪 로그아웃</button>
+    <span>파크스 관리자 시스템</span>
+  </div>
 </aside>
 
 <div class="main">
@@ -208,6 +253,7 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
       <div class="tb-ttl" id="tb-ttl">운영 현황 대시보드</div>
     </div>
     <div class="tb-r">
+      <button onclick="exportExcel()" style="background:#16a34a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:5px">📥 엑셀 내보내기</button>
       <div class="date-badge" id="today-badge">로딩중...</div>
     </div>
   </div>
@@ -283,19 +329,6 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
 
     <!-- 고객목록 -->
     <div class="page-section" id="page-customers">
-      <div id="edit-modal">
-        <div style="background:var(--sur);border-radius:14px;padding:24px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-            <h2 style="font-size:16px;font-weight:800;color:var(--navy)">고객 정보 수정</h2>
-            <button onclick="closeEditModal()" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--bdr);background:var(--sur2);cursor:pointer;font-size:14px">✕</button>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="edit-fields"></div>
-          <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
-            <button onclick="closeEditModal()" style="padding:9px 18px;border-radius:8px;border:1px solid var(--bdr);background:var(--sur2);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">취소</button>
-            <button onclick="saveEdit()" style="padding:9px 18px;border-radius:8px;border:none;background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">저장</button>
-          </div>
-        </div>
-      </div>
       <div class="card">
         <div class="ch">
           <h2>고객 목록 <span style="font-size:12px;color:var(--muted)" id="cust-count"></span></h2>
@@ -351,7 +384,7 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
         </div>
         <div id="ended-loading" style="text-align:center;padding:32px;color:var(--muted)">
           <div style="font-size:24px;margin-bottom:8px">⏳</div>
-          <p style="font-size:13px">구글 시트에서 불러오는 중...</p>
+          <p style="font-size:13px">데이터를 불러오는 중...</p>
         </div>
         <div style="overflow-x:auto;display:none" id="ended-table-wrap">
           <table class="ctbl">
@@ -367,18 +400,19 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
 
 <script>
 // ══════════════════════════════════════════════════════
-// 구글 시트 설정
+// Supabase 설정
 // ══════════════════════════════════════════════════════
-const SHEET_ID = '1Cs_Ol94VqEauRx3GTim1q2Sz25eIvnM0q7xBeKzBFMA';
-
-async function fetchSheet(name) {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(name)}&t=${Date.now()}`;
-  const res = await fetch(url);
-  const text = await res.text();
-  return JSON.parse(text.substring(47, text.length - 2)).table.rows;
+const SUPABASE_URL = 'https://zsiklzhtotlaozuxdumb.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_y1jh83wxGBH6Xp0PcIxhwQ_Kr03Ibeb';
+const SB_HEADERS = {apikey:SUPABASE_KEY, Authorization:'Bearer '+SUPABASE_KEY, 'Content-Type':'application/json'};
+// 쓰기(수정/삭제/추가)용 헤더 — 로그인 토큰 사용
+function writeHeaders(){
+  return {apikey:SUPABASE_KEY, Authorization:'Bearer '+(sbToken||SUPABASE_KEY), 'Content-Type':'application/json', Prefer:'return=minimal'};
 }
-function rv(row, i) {
-  return row.c && row.c[i] && row.c[i].v != null ? String(row.c[i].v).trim() : '';
+
+async function sbGet(table, query=''){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?${query}`, {headers:SB_HEADERS});
+  return await res.json();
 }
 
 // ══════════════════════════════════════════════════════
@@ -394,35 +428,34 @@ let ENDED_ALL = [];
 // ══════════════════════════════════════════════════════
 async function loadAllData() {
   try {
-    const rows = await fetchSheet('창고목록');
+    const rows = await sbGet('warehouses', 'select=*&order=unit_no');
     const newUnits = [];
-    rows.forEach(row => {
-      if (!row.c || !row.c[0] || !row.c[0].v) return;
-      const id    = rv(row, 0);
-      const type  = rv(row, 1);
-      const daysRaw = row.c[7] && row.c[7].v != null ? Number(row.c[7].v) : null;
-      const status = daysToStatus(daysRaw);
+    rows.forEach(r => {
+      if (!r.unit_no) return;
+      const daysRaw = r.days_left != null ? Number(r.days_left) : null;
+      // 상태: DB status가 '이용가능'이면 avail, 아니면 잔여일로 세분화
+      const status = (r.status === '이용가능' || !r.status) ? 'avail' : daysToStatus(daysRaw);
       newUnits.push({
-        id, type, status,
+        dbId:   r.id,
+        id:     String(r.unit_no).trim(),
+        type:   r.unit_type || '',
+        status,
         days:   daysRaw,
-        name:   rv(row, 3),
-        phone:  rv(row, 4),
-        start:  rv(row, 5),
-        end:    rv(row, 6),
-        amount: parseInt(String(rv(row, 8)).replace(/,/g,'')) || 0,
-        goods:  rv(row, 9),
-        pay:    rv(row, 10),
-        memo:   rv(row, 11),
+        name:   r.customer_name || '',
+        phone:  r.phone || '',
+        start:  r.contract_start || '',
+        end:    r.contract_end || '',
+        amount: parseInt(String(r.amount||'').replace(/,/g,'')) || 0,
+        goods:  r.items || '',
+        pay:    r.payment_method || '',
+        memo:   r.memo || '',
       });
     });
 
     UNITS = newUnits;
-
-    // UNIT_MAP 재구성
     UNIT_MAP = {};
     UNITS.forEach(u => { UNIT_MAP[u.id] = u; });
 
-    // CUSTS: 사용중 고객, 중복(같은 phone+end) 합산
     const seen = new Set();
     const newCUSTS = [];
     UNITS.forEach(u => {
@@ -542,7 +575,7 @@ function showUnit(id, mk) {
 
   const u = UNIT_MAP[id];
   if(!u || u.status==='avail') {
-    document.getElementById(bodyId).innerHTML=`<div class="dp-empty"><div style="font-size:30px;margin-bottom:8px">🟢</div><p style="font-size:12.5px;color:#6b7280;line-height:1.7">공실 창고입니다<br>예약 등록 가능</p></div><div class="act-row"><button class="abtn primary" onclick="alert('예약 등록')">예약 등록</button></div>`;
+    document.getElementById(bodyId).innerHTML=`<div class="dp-empty"><div style="font-size:30px;margin-bottom:8px">🟢</div><p style="font-size:12.5px;color:#6b7280;line-height:1.7">공실 창고입니다<br>고객 등록 가능</p></div><div class="act-row"><button class="abtn primary" onclick="openEdit('${id}')">+ 고객 등록</button></div>`;
     return;
   }
   const d = u.days;
@@ -561,11 +594,11 @@ function showUnit(id, mk) {
       <div class="drow"><span class="dk">잔여일</span><span class="dv" style="color:${u.status==='overdue'?'var(--red)':u.status==='expiring'?'var(--yellow)':'var(--blue)'}">${d!==null?(d<0?`연체 ${Math.abs(d)}일`:`D-${d}`):'—'}</span></div>
       <div class="drow"><span class="dk">결제 금액</span><span class="dv">${u.amount?u.amount.toLocaleString()+'원':'—'}</span></div>
       <div class="drow"><span class="dk">결제 수단</span><span class="dv">${u.pay||'—'}</span></div>
+      <div class="drow"><span class="dk">메모</span><span class="dv">${u.memo||'—'}</span></div>
     </div>
     <div class="act-row">
-      <button class="abtn primary" onclick="alert('${nm}님에게 알림 발송 완료!')">알림 발송</button>
-      <button class="abtn" onclick="alert('계약 연장 처리')">계약 연장</button>
-      <button class="abtn danger" onclick="alert('계약 해지 처리')">해지</button>
+      <button class="abtn primary" onclick="openEdit('${id}')">✏️ 정보 수정</button>
+      <button class="abtn danger" onclick="endContract('${id}')">계약 종료</button>
     </div>`;
 }
 
@@ -680,10 +713,16 @@ function filterCusts(v){buildCustTable(v);}
 // ══════════════════════════════════════════════════════
 async function loadEndedData() {
   try {
-    const rows = await fetchSheet('종료고객');
-    ENDED_ALL = rows.map(row=>{
-      if(!row.c||!row.c[0]||!row.c[0].v) return null;
-      return {unit:rv(row,0),type:rv(row,1),name:rv(row,3),phone:rv(row,4),start:rv(row,5),end:rv(row,6),days:rv(row,7),amount:rv(row,8),pay:rv(row,10),memo:rv(row,11)};
+    const rows = await sbGet('ended_customers', 'select=*&order=ended_at.desc');
+    ENDED_ALL = rows.map(r=>{
+      if(!r.unit_no) return null;
+      // 이용기간(일) 계산
+      let days='';
+      if(r.contract_start && r.contract_end){
+        const d=Math.round((new Date(r.contract_end)-new Date(r.contract_start))/86400000);
+        if(!isNaN(d)) days=d;
+      }
+      return {unit:r.unit_no,type:r.unit_type||'',name:r.customer_name||'',phone:r.phone||'',start:r.contract_start||'',end:r.contract_end||'',days:days,amount:r.amount||'',pay:r.payment_method||'',memo:r.memo||''};
     }).filter(Boolean);
     buildEndedTable(ENDED_ALL);
   } catch(e) {
@@ -741,10 +780,158 @@ function showPage(id, triggerEl) {
 function toggleSB(){const sb=document.getElementById('sb');const ov=document.getElementById('sb-ov');const o=sb.classList.toggle('open');ov.classList.toggle('on',o);document.body.style.overflow=o?'hidden':'';}
 function closeSB(){document.getElementById('sb').classList.remove('open');document.getElementById('sb-ov').classList.remove('on');document.body.style.overflow='';}
 
-// 고객 수정 (간단 버전)
-let editIdx=-1;
+// ══════════════════════════════════════════════════════
+// 고객 정보 수정 / 등록 (DB 저장)
+// ══════════════════════════════════════════════════════
+let editId=null;
+function openEdit(id){
+  editId=id;
+  const u=UNIT_MAP[id]||{id,type:'원룸'};
+  const f=[
+    ['type','타입','select',['하프룸','원룸','투룸','쓰리룸','포룸']],
+    ['name','고객명','text'],
+    ['phone','연락처','text'],
+    ['start','계약시작','date'],
+    ['end','계약종료','date'],
+    ['days','잔여일(숫자)','number'],
+    ['amount','금액(원)','number'],
+    ['goods','보관물품','text'],
+    ['pay','결제수단','text'],
+    ['memo','메모','text'],
+  ];
+  document.getElementById('edit-fields').innerHTML=
+    `<div style="grid-column:1/3;font-size:13px;color:var(--muted);margin-bottom:4px">창고 <strong style="color:var(--navy);font-family:monospace">${id}</strong> 정보</div>`+
+    f.map(([k,label,type,opts])=>{
+      const val=u[k]!=null?u[k]:'';
+      if(type==='select'){
+        return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
+          <select id="ef-${k}" style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px">
+          ${opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select></div>`;
+      }
+      return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
+        <input id="ef-${k}" type="${type}" value="${String(val).replace(/"/g,'&quot;')}" style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px"></div>`;
+    }).join('');
+  document.getElementById('edit-modal').classList.add('on');
+  document.body.style.overflow='hidden';
+}
 function closeEditModal(){document.getElementById('edit-modal').classList.remove('on');document.body.style.overflow='';}
-function saveEdit(){closeEditModal();buildCustTable();alert('✅ 수정 완료! 구글 시트에도 동일하게 업데이트해주세요.');}
+
+async function saveEdit(){
+  if(!editId) return;
+  const g=k=>document.getElementById('ef-'+k).value.trim();
+  const daysVal = g('days')===''?null:Number(g('days'));
+  const amtVal = g('amount')===''?null:Number(g('amount'));
+  // 고객명/연락처가 있으면 '사용중', 아니면 '이용가능'
+  const hasCustomer = g('name')||g('phone');
+  const payload={
+    unit_type:g('type'),
+    status: hasCustomer?'사용중':'이용가능',
+    customer_name:g('name')||null,
+    phone:g('phone')||null,
+    contract_start:g('start')||null,
+    contract_end:g('end')||null,
+    days_left:daysVal,
+    amount:amtVal,
+    items:g('goods')||null,
+    payment_method:g('pay')||null,
+    memo:g('memo')||null,
+    updated_at:new Date().toISOString()
+  };
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/warehouses?unit_no=eq.${encodeURIComponent(editId)}`,{
+      method:'PATCH',headers:writeHeaders(),body:JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error('저장 실패 '+res.status);
+    closeEditModal();
+    await loadAllData();
+    showUnit(editId,'m1');
+    alert('✅ 저장 완료! 사이트에 바로 반영됩니다.');
+  }catch(e){
+    alert('❌ 저장 실패: '+e.message);
+  }
+}
+
+async function endContract(id){
+  const u=UNIT_MAP[id];
+  if(!u) return;
+  if(!confirm(`창고 ${id} (${u.name||'고객'})의 계약을 종료하시겠습니까?\n\n종료 고객 이력으로 이동하고, 창고는 '이용가능'으로 바뀝니다.`)) return;
+  try{
+    // 1. 종료고객 테이블에 추가
+    await fetch(`${SUPABASE_URL}/rest/v1/ended_customers`,{
+      method:'POST',headers:writeHeaders(),body:JSON.stringify({
+        unit_no:u.id,unit_type:u.type,customer_name:u.name||null,phone:u.phone||null,
+        contract_start:u.start||null,contract_end:u.end||null,amount:u.amount||null,
+        items:u.goods||null,payment_method:u.pay||null,memo:u.memo||null
+      })
+    });
+    // 2. 창고는 이용가능으로 초기화
+    await fetch(`${SUPABASE_URL}/rest/v1/warehouses?unit_no=eq.${encodeURIComponent(id)}`,{
+      method:'PATCH',headers:writeHeaders(),body:JSON.stringify({
+        status:'이용가능',customer_name:null,phone:null,contract_start:null,contract_end:null,
+        days_left:null,amount:null,items:null,payment_method:null,memo:null,updated_at:new Date().toISOString()
+      })
+    });
+    await loadAllData();
+    ENDED_ALL=[];
+    showUnit(id,'m1');
+    alert('✅ 계약 종료 처리 완료!');
+  }catch(e){
+    alert('❌ 처리 실패: '+e.message);
+  }
+}
+// ══════════════════════════════════════════════════════
+// 엑셀 내보내기 (현재 DB 전체 → xlsx)
+// ══════════════════════════════════════════════════════
+async function exportExcel(){
+  try{
+    // 창고목록 전체
+    const wh = await sbGet('warehouses', 'select=*&order=unit_no');
+    const ended = await sbGet('ended_customers', 'select=*&order=ended_at.desc');
+
+    const whRows = wh.map(r=>({
+      '창고번호':r.unit_no||'', '타입':r.unit_type||'', '상태':r.status||'',
+      '고객명':r.customer_name||'', '연락처':r.phone||'',
+      '계약시작':r.contract_start||'', '계약종료':r.contract_end||'',
+      '잔여일':r.days_left!=null?r.days_left:'', '금액(원)':r.amount!=null?r.amount:'',
+      '보관물품':r.items||'', '결제수단':r.payment_method||'', '메모':r.memo||''
+    }));
+
+    const endedRows = ended.map(r=>({
+      '창고번호':r.unit_no||'', '타입':r.unit_type||'', '고객명':r.customer_name||'',
+      '연락처':r.phone||'', '계약시작':r.contract_start||'', '계약종료':r.contract_end||'',
+      '금액(원)':r.amount!=null?r.amount:'', '보관물품':r.items||'',
+      '결제수단':r.payment_method||'', '메모':r.memo||''
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws1 = XLSX.utils.json_to_sheet(whRows);
+    const ws2 = XLSX.utils.json_to_sheet(endedRows);
+    // 컬럼 너비
+    ws1['!cols']=[{wch:8},{wch:8},{wch:8},{wch:14},{wch:18},{wch:12},{wch:12},{wch:7},{wch:10},{wch:14},{wch:14},{wch:24}];
+    ws2['!cols']=[{wch:8},{wch:8},{wch:14},{wch:18},{wch:12},{wch:12},{wch:10},{wch:14},{wch:14},{wch:24}];
+    XLSX.utils.book_append_sheet(wb, ws1, '창고목록');
+    XLSX.utils.book_append_sheet(wb, ws2, '종료고객');
+
+    const today=new Date();
+    const fname=`파크스_백업_${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}.xlsx`;
+    XLSX.writeFile(wb, fname);
+  }catch(e){
+    alert('❌ 내보내기 실패: '+e.message);
+  }
+}
 </script>
+<div id="edit-modal">
+  <div style="background:var(--sur);border-radius:14px;padding:24px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <h2 style="font-size:16px;font-weight:800;color:var(--navy)">고객 정보 수정</h2>
+      <button onclick="closeEditModal()" style="width:30px;height:30px;border-radius:50%;border:1px solid var(--bdr);background:var(--sur2);cursor:pointer;font-size:14px">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="edit-fields"></div>
+    <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
+      <button onclick="closeEditModal()" style="padding:9px 18px;border-radius:8px;border:1px solid var(--bdr);background:var(--sur2);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">취소</button>
+      <button onclick="saveEdit()" style="padding:9px 18px;border-radius:8px;border:none;background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">저장</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
