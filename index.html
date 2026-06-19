@@ -44,13 +44,14 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 /* MODE TABS */
 .mode-bar{background:#fff;border-bottom:2px solid var(--border);padding:0;display:flex;overflow-x:auto;scrollbar-width:none}
 .mode-bar::-webkit-scrollbar{display:none}
-.mb{flex:1;min-width:80px;padding:10px 8px;text-align:center;font-size:12px;font-weight:500;color:#777;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;background:none;border-left:none;border-right:none;border-top:none}
+.mb{flex:1;min-width:80px;padding:10px 8px;text-align:center;font-size:12px;font-weight:500;color:#777;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;white-space:nowrap;font-family:'Noto Sans KR',sans-serif;background:none;border-left:none;border-right:none;border-top:none;display:flex;align-items:center;justify-content:center;gap:6px}
+.mdot{display:inline-block;width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .mb.on{color:var(--navy);font-weight:800;border-bottom-color:var(--navy)}
 .mb-cnt{display:block;font-size:10px;color:#aaa;margin-top:2px;font-weight:400}
 .mb.on .mb-cnt{color:var(--navy);opacity:.6}
 
 /* SEL HINT */
-.sel-bar{display:none;background:#f5f3ff;border-bottom:2px solid #a78bfa;padding:9px 16px;align-items:center;gap:8px;font-size:12.5px;color:#5b21b6;line-height:1.5}
+.sel-bar{display:none;background:#f8f9fc;border-bottom:3px solid #a78bfa;padding:9px 16px;align-items:center;gap:8px;font-size:12.5px;color:#444;line-height:1.5;flex-wrap:wrap}
 .sel-bar.on{display:flex}
 
 /* LAYOUT */
@@ -78,13 +79,15 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 .u.s2{background:var(--sel2)!important;border-color:#92400e!important;color:#fff!important;transform:translateY(-2px);box-shadow:0 4px 14px rgba(180,83,9,.4)!important;outline:3px solid #fde68a;outline-offset:1px}
 .u.s3{background:var(--sel3)!important;border-color:#5b21b6!important;color:#fff!important;transform:translateY(-2px);outline:3px solid #ddd6fe;outline-offset:1px}
 .u.s4{background:var(--sel4)!important;border-color:#9a3412!important;color:#fff!important;transform:translateY(-2px);outline:3px solid #fed7aa;outline-offset:1px}
-/* 콤보(투/쓰리/포룸) 모드 */
-.u.combo-double{background:#ede9fe!important;border-color:#a78bfa!important;color:#6d28d9!important;cursor:pointer;animation:comboPulse 1.8s ease-in-out infinite}
-.u.combo-triple{background:#fef3c7!important;border-color:#fbbf24!important;color:#92400e!important;cursor:pointer;animation:comboPulse 1.8s ease-in-out infinite}
+/* 콤보(투/쓰리/포룸) 모드 — 클릭 시 상담안내(전화/문자), 온라인 신청 없음 */
+.u.combo-double{background:#fef3c7!important;border-color:#fbbf24!important;color:#92400e!important;cursor:pointer;animation:comboPulse 1.8s ease-in-out infinite}
+.u.combo-triple{background:#ede9fe!important;border-color:#a78bfa!important;color:#6d28d9!important;cursor:pointer;animation:comboPulse 1.8s ease-in-out infinite}
 .u.combo-quad{background:#fee2e2!important;border-color:#f87171!important;color:#991b1b!important;cursor:pointer;animation:comboPulse 1.8s ease-in-out infinite}
-@keyframes comboPulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.25)}50%{box-shadow:0 0 0 4px rgba(124,58,237,.12)}}
+@keyframes comboPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,0,0,.08)}50%{box-shadow:0 0 0 4px rgba(0,0,0,.04)}}
 .u.combo-na{opacity:.25!important;cursor:default!important;filter:grayscale(.4)}
 .u.combo-na:hover{transform:none!important;box-shadow:none!important}
+/* 하프룸 보기 모드 — A열 강조(파란색) */
+.u.half-avail{background:#e0f2fe!important;border-color:#38bdf8!important;color:#0369a1!important;cursor:pointer;animation:comboPulse 1.8s ease-in-out infinite}
 .uid{font-size:10px;font-weight:700;line-height:1.1;text-align:center}
 .utype{font-size:7.5px;opacity:.75;margin-top:1.5px;text-align:center}
 
@@ -273,14 +276,19 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 </div>
 
 <div class="mode-bar">
-  <button class="mb on" onclick="setMode('single',this)">📦 원룸 보기</button>
-  <button class="mb" onclick="setMode('double',this)">🔗 투룸 (2칸 연결)</button>
-  <button class="mb" onclick="setMode('triple',this)">🔗 쓰리룸 (3칸 연결)</button>
-  <button class="mb" onclick="setMode('quad',this)">🔗 포룸 (4칸 연결)</button>
+  <button class="mb on" onclick="setMode('single',this)"><span class="mdot" style="background:#1a2870"></span>원룸 보기</button>
+  <button class="mb" onclick="setMode('double',this)"><span class="mdot" style="background:#f59e0b"></span>투룸 보기</button>
+  <button class="mb" onclick="setMode('triple',this)"><span class="mdot" style="background:#a78bfa"></span>쓰리룸 보기</button>
+  <button class="mb" onclick="setMode('quad',this)"><span class="mdot" style="background:#f87171"></span>포룸 보기</button>
+  <button class="mb" onclick="setMode('half',this)"><span class="mdot" style="background:#38bdf8"></span>하프룸 보기</button>
 </div>
 
 <div class="sel-bar" id="sbar">
   <span id="sbar-txt"></span>
+  <div id="sbar-btns" style="display:none;gap:6px;margin-left:auto;flex-shrink:0">
+    <a href="tel:010-6464-1666" style="display:flex;align-items:center;gap:4px;background:var(--navy);color:#fff;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap">📞 전화</a>
+    <a href="sms:010-6464-1666" style="display:flex;align-items:center;gap:4px;background:#16a34a;color:#fff;padding:6px 12px;border-radius:7px;font-size:12px;font-weight:700;text-decoration:none;white-space:nowrap">💬 문자</a>
+  </div>
 </div>
 
 <div class="body">
@@ -463,7 +471,7 @@ const COLS={
 const APAIRS=[['A21','A22'],['A19','A20'],['A17','A18'],['A15','A16'],null,['A13','A14'],['A11','A12'],['A09','A10'],['A07','A08'],null,['A05','A06'],['A03','A04'],['A01','A02']];
 const IROW=['I04','I03','I02','I01'];
 
-let mode='single', sels=[], selM=1;
+let mode='single', sels=[], selM=1, selCombo=null;
 let COMBO={idToRun:{}, runs:[]}; // 투/쓰리/포룸 모드일 때 연속 빈칸 묶음
 
 function isHalf(id){return id&&id.startsWith('A')}
@@ -519,7 +527,7 @@ async function loadSheetData(){
     });
     if(Object.keys(newStatus).length>0){
       UNIT_STATUS=newStatus;
-      if(mode!=='single'){ COMBO=computeCombos(MX[mode]); }
+      if(mode==='double'||mode==='triple'||mode==='quad'){ COMBO=computeCombos(MX[mode]); }
       renderMap();
       updateStats();
       if(mode!=='single') updateHint();
@@ -547,11 +555,16 @@ function dimCheck(id){ return false; }
 function cell(id,w,h){
   if(!id) return`<div style="width:${w}px;height:${h}px"></div>`;
   const style=`width:${w}px;height:${h}px`;
-  if(mode!=='single'){
-    // 콤보 모드: 묶음에 속하면 강조+클릭, 아니면 흐리게 비활성
+  if(mode==='half'){
+    // 하프룸 보기: 일반 원룸(B~I)은 흐리게 비활성
+    const st=UNIT_STATUS[id]||'avail';
+    return`<div class="u ${st} combo-na" style="${style}"><div class="uid">${id}</div></div>`;
+  }
+  if(mode==='double'||mode==='triple'||mode==='quad'){
+    // 콤보 모드: 묶음 강조 + 클릭 시 상담 안내(전화/문자만, 온라인 신청은 없음)
     const runIdx=COMBO.idToRun[id];
     if(runIdx!==undefined){
-      return`<div class="u combo-${mode}" onclick='pickCombo(${runIdx})' style="${style}"><div class="uid">${id}</div></div>`;
+      return`<div class="u combo-${mode}" onclick='viewCombo(${runIdx})' style="${style}"><div class="uid">${id}</div></div>`;
     }
     const st=UNIT_STATUS[id]||'avail';
     return`<div class="u ${st} combo-na" style="${style}"><div class="uid">${id}</div></div>`;
@@ -583,18 +596,18 @@ function renderMap(){
   h+=`<div style="width:6px"></div>`;
   h+=`<div style="display:flex;gap:${G}px">${renderCol('C')}${renderCol('B')}</div>`;
   h+=`<div style="width:8px"></div>`;
-  // A열 (하프룸 — 콤보 대상 아님)
+  // A열 (하프룸) — '하프룸 보기'에서만 활성화(파란색), 그 외엔 비활성
   h+=`<div class="col"><div class="cl">A</div>`;
   APAIRS.forEach(p=>{
     if(!p){h+=pillarCell(S*2+4,S);return;}
     const[l,r]=p;
     h+=`<div style="display:flex;flex-direction:column;gap:3px">`;
-    if(mode!=='single'){
+    if(mode==='half'){
+      if(l){const st=UNIT_STATUS[l]||'avail';const cls=st==='avail'?'u half-avail':'u active';h+=`<div class="${cls}" onclick="pick('${l}')"  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${l}</div></div>`;}
+      if(r){const st=UNIT_STATUS[r]||'avail';const cls=st==='avail'?'u half-avail':'u active';h+=`<div class="${cls}" onclick="pick('${r}')"  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${r}</div></div>`;}
+    } else {
       if(l){const st=UNIT_STATUS[l]||'avail';h+=`<div class="u ${st} combo-na" style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${l}</div></div>`;}
       if(r){const st=UNIT_STATUS[r]||'avail';h+=`<div class="u ${st} combo-na" style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${r}</div></div>`;}
-    } else {
-      if(l){const cls=getUnitCls(l);h+=`<div class="${cls}" onclick="pick('${l}')"  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${l}</div></div>`;}
-      if(r){const cls=getUnitCls(r);h+=`<div class="${cls}" onclick="pick('${r}')"  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${r}</div></div>`;}
     }
     h+=`</div>`;
   });
@@ -619,61 +632,38 @@ function updateStats(){
 
 // ── 선택 ───────────────────────────────────────
 function pick(id){
+  selCombo=null;
   const si=selIdx(id);
   if(si>=0){sels=sels.filter(x=>x!==id);}
   else{sels=[id];}
   selM=1;renderMap();updatePanel();
   // 모바일: 바텀시트 열기
-  if(window.innerWidth<=860 && sels.length>0) openMobileSheet(sels[0]);
+  if(window.innerWidth<=860 && sels.length>0) openMobileSheet();
+}
+function viewCombo(runIdx){
+  const ids=COMBO.runs[runIdx];
+  if(!ids) return;
+  sels=[]; selCombo={ids, type:mode};
+  updatePanel();
+  if(window.innerWidth<=860) openMobileSheet();
 }
 
-function openMobileSheet(id){
-  const st=UNIT_STATUS[id]||'avail';
-  const isAvail=st==='avail';
-  const stTxt=isAvail?'🟢 이용가능':'⬜ 사용중';
-  const stColor=isAvail?'#16a34a':'#64748b';
-
-  // 헤더 제목
-  document.getElementById('shttl').innerHTML=
-    `<span style="font-family:'Space Mono',monospace">${id}</span>&nbsp;
-     <span style="font-size:12px;font-weight:600;color:${stColor}">${stTxt}</span>`;
-
-  // 바텀시트 본문
-  let b='';
-
-  // 이용가능이면 상담문의 버튼 크게
-  if(isAvail){
-    b+=`<div style="font-size:13px;color:#555;line-height:1.8;margin-bottom:14px">
-          이용 가능한 창고입니다.<br>아래 버튼으로 상담을 신청하세요.
-        </div>
-        <button onclick="openInquiry('${id}')" style="width:100%;background:var(--navy);color:#fff;padding:14px;border-radius:10px;font-size:15px;font-weight:700;border:none;margin-bottom:10px;font-family:'Noto Sans KR',sans-serif">💬 상담 문의하기</button>
-        <div style="display:flex;gap:10px;margin-bottom:20px">
-          <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#f0f3fb;color:var(--navy);padding:12px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none">📞 전화</a>
-          <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#f0f3fb;color:var(--navy);padding:12px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none">💬 문자</a>
-        </div>`;
-  } else {
-    b+=`<div style="background:#f1f5f9;border-radius:9px;padding:11px 13px;margin-bottom:16px;font-size:13px;color:#64748b;">
-          현재 사용 중인 창고입니다.
-        </div>`;
-  }
-
-  // 이용 안내
-  b+=`<div style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.1em;margin-bottom:8px">이용 안내</div>
+// 이용 안내 + 타입&요금 섹션 (PC 패널/모바일 시트 공용)
+function infoSectionsHTML(){
+  return `<div style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.1em;margin-bottom:8px">이용 안내</div>
       <div style="background:#f7f9fd;border-radius:10px;padding:4px 12px;margin-bottom:16px">
         ${[['📹','CCTV 24시간 녹화 운영'],['🔑','스마트폰 원격 출입 (24시간)'],['🌡️','항온항습 자동 유지'],['🚗','방문 차량 30분 무료 주차'],['🚭','실내 금연 · 애완동물 입장 불가'],['📞','고객센터 010-6464-1666']]
           .map(([ic,tx])=>`<div style="display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid #eef;font-size:13px"><span>${ic}</span><span>${tx}</span></div>`)
           .join('')}
-      </div>`;
-
-  // 창고 타입 안내
-  b+=`<div style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.1em;margin-bottom:8px">창고 타입 & 요금</div>
+      </div>
+      <div style="font-size:10px;font-weight:700;color:#aaa;letter-spacing:.1em;margin-bottom:8px">창고 타입 & 요금</div>
       <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:20px">
         ${[
-          ['하프룸','90×90×100cm','29,000','','#dcfce7','#4ade80','#14532d'],
-          ['원룸','90×90×210cm','59,000','','#dbeafe','#60a5fa','#1e40af'],
-          ['투룸','180×90×210cm','99,000','원룸 2칸 격벽 제거 사용','#ede9fe','#c4b5fd','#6d28d9'],
-          ['쓰리룸','270×90×210cm','139,000','원룸 3칸 격벽 제거 사용','#fef3c7','#fde68a','#92400e'],
-          ['포룸','360×90×210cm','189,000','원룸 4칸 격벽 제거 사용','#fee2e2','#fca5a5','#991b1b']
+          ['하프룸','90×90×100cm','29,000','','#e0f2fe','#38bdf8','#0369a1'],
+          ['원룸','90×90×210cm','59,000','','#dcfce7','#4ade80','#15803d'],
+          ['투룸','180×90×210cm','99,000','원룸 2칸 격벽 제거 사용','#fef3c7','#fbbf24','#92400e'],
+          ['쓰리룸','270×90×210cm','139,000','원룸 3칸 격벽 제거 사용','#ede9fe','#a78bfa','#6d28d9'],
+          ['포룸','360×90×210cm','189,000','원룸 4칸 격벽 제거 사용','#fee2e2','#f87171','#991b1b']
         ].map(([nm,sz,pr,desc,bg,bd,tc])=>`
           <div style="background:#f8f9fc;border-radius:9px;border:1px solid #e8ecf6;padding:10px 12px;display:flex;align-items:center;gap:10px">
             <div style="width:34px;height:34px;background:${bg};border:1.5px solid ${bd};border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:900;color:${tc};text-align:center;line-height:1.2">${nm.length<=2?nm+'<br>룸':nm.replace('룸','<br>룸')}</div>
@@ -686,8 +676,47 @@ function openMobileSheet(id){
           </div>`)
           .join('')}
       </div>`;
+}
 
-  // 하단 문의 버튼
+function openMobileSheet(){
+  let headerHTML, topHTML;
+  if(selCombo){
+    const {ids,type}=selCombo;
+    const MC={double:'#d97706',triple:'#7c3aed',quad:'#dc2626'};
+    headerHTML=`<span style="font-family:'Space Mono',monospace">${ids.join(' + ')}</span>&nbsp;
+       <span style="font-size:12px;font-weight:600;color:#16a34a">🟢 이용가능</span>`;
+    topHTML=`<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 14px;margin-bottom:16px">
+          <div style="font-size:13px;font-weight:700;color:${MC[type]};margin-bottom:4px">${TL[type]}(${TS[type]})로 배치 가능</div>
+          <div style="font-size:12.5px;color:#666;line-height:1.6">격벽 제거가 필요해 <strong>사전 창고관리자와 상담이 필요합니다.</strong><br>아래 연락처로 문의해주세요.</div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:20px">
+          <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--navy);color:#fff;padding:13px;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none">📞 전화상담</a>
+          <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#16a34a;color:#fff;padding:13px;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none">💬 문자상담</a>
+        </div>`;
+  } else {
+    const id=sels[0];
+    const st=UNIT_STATUS[id]||'avail';
+    const isAvail=st==='avail';
+    headerHTML=`<span style="font-family:'Space Mono',monospace">${id}</span>&nbsp;
+       <span style="font-size:12px;font-weight:600;color:${isAvail?'#16a34a':'#64748b'}">${isAvail?'🟢 이용가능':'⬜ 사용중'}</span>`;
+    if(isAvail){
+      topHTML=`<div style="font-size:13px;color:#555;line-height:1.8;margin-bottom:14px">
+            이용 가능한 창고입니다.<br>아래 버튼으로 상담을 신청하세요.
+          </div>
+          <button onclick="openInquiry('${id}')" style="width:100%;background:var(--navy);color:#fff;padding:14px;border-radius:10px;font-size:15px;font-weight:700;border:none;margin-bottom:10px;font-family:'Noto Sans KR',sans-serif">💬 상담 문의하기</button>
+          <div style="display:flex;gap:10px;margin-bottom:20px">
+            <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#f0f3fb;color:var(--navy);padding:12px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none">📞 전화</a>
+            <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#f0f3fb;color:var(--navy);padding:12px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none">💬 문자</a>
+          </div>`;
+    } else {
+      topHTML=`<div style="background:#f1f5f9;border-radius:9px;padding:11px 13px;margin-bottom:16px;font-size:13px;color:#64748b;">
+            현재 사용 중인 창고입니다.
+          </div>`;
+    }
+  }
+
+  document.getElementById('shttl').innerHTML=headerHTML;
+  let b=topHTML + infoSectionsHTML();
   b+=`<div style="display:flex;gap:10px;padding-bottom:8px">
         <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--navy);color:#fff;padding:13px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none">📞 전화문의</a>
         <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;background:#16a34a;color:#fff;padding:13px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none">💬 문자문의</a>
@@ -699,31 +728,56 @@ function openMobileSheet(id){
   document.body.style.overflow='hidden';
 }
 function setMode(m,btn){
-  mode=m;sels=[];
+  mode=m;sels=[];selCombo=null;
   document.querySelectorAll('.mb').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  if(m!=='single'){ COMBO=computeCombos(MX[m]); } else { COMBO={idToRun:{},runs:[]}; }
+  if(m==='double'||m==='triple'||m==='quad'){ COMBO=computeCombos(MX[m]); } else { COMBO={idToRun:{},runs:[]}; }
   renderMap();updateHint();updatePanel();
 }
 function updateHint(){
   const bar=document.getElementById('sbar');
+  const btns=document.getElementById('sbar-btns');
   if(mode==='single'){ bar.classList.remove('on'); return; }
   bar.classList.add('on');
+  btns.style.display='none';
   const t=document.getElementById('sbar-txt');
+  const MC={double:'#d97706',triple:'#7c3aed',quad:'#dc2626',half:'#0284c7'};
+  bar.style.borderColor=MC[mode]||'#a78bfa';
+  if(mode==='half'){
+    const avail=Object.keys(UNIT_STATUS).filter(id=>isHalf(id)&&(UNIT_STATUS[id]||'avail')==='avail').length;
+    t.innerHTML=`<strong>하프룸</strong>(${TS.half}) 칸만 강조했습니다. 현재 이용가능 <strong style="color:${MC.half}">${avail}칸</strong> — 초록 칸을 클릭해 상담 문의하세요.`;
+    return;
+  }
+  // 투/쓰리/포룸: 칸 클릭하면 상담 안내(전화/문자) 표시
   const cnt=COMBO.runs.length;
   if(cnt>0){
-    t.innerHTML=`<strong>${TL[mode]}</strong>(${TS[mode]})로 가능한 조합 <strong style="color:#7c3aed">${cnt}개</strong> 발견! 색칠된 칸을 클릭해 상담 문의하세요.`;
+    t.innerHTML=`<strong>${TL[mode]}</strong>(${TS[mode]})로 배치 가능한 자리 <strong style="color:${MC[mode]}">${cnt}곳</strong> 있습니다. 색칠된 칸을 클릭하면 상담 안내가 표시됩니다.`;
   } else {
-    t.innerHTML=`현재 <strong>${TL[mode]}</strong>로 연결 가능한 연속 빈칸이 없습니다. 전화로 문의해주세요 📞 010-6464-1666`;
+    t.innerHTML=`현재 <strong>${TL[mode]}</strong>로 배치 가능한 연속 빈칸이 없습니다. 전화로 문의해주세요.`;
   }
-}
-function pickCombo(runIdx){
-  const ids=COMBO.runs[runIdx];
-  if(!ids) return;
-  openInquiry(ids, mode);
 }
 
 function updatePanel(){
+  if(selCombo){
+    const {ids,type}=selCombo;
+    const MC={double:'#d97706',triple:'#7c3aed',quad:'#dc2626'};
+    document.getElementById('pempty').style.display='none';
+    const pd=document.getElementById('pdet');pd.style.display='block';
+    pd.innerHTML=`
+      <div style="text-align:center;padding:12px 0 8px">
+        <div style="font-family:'Space Mono',monospace;font-size:17px;font-weight:700;color:var(--navy)">${ids.join(' + ')}</div>
+        <div style="font-size:13px;margin-top:6px">🟢 이용가능</div>
+        <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:9px;padding:10px 12px;margin-top:12px;text-align:left">
+          <div style="font-size:12.5px;font-weight:700;color:${MC[type]};margin-bottom:3px">${TL[type]}(${TS[type]})로 배치 가능</div>
+          <div style="font-size:11.5px;color:#666;line-height:1.6">격벽 제거가 필요해 <strong>사전 창고관리자와 상담이 필요합니다.</strong></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:var(--navy);color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">📞 전화상담</a>
+          <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:#16a34a;color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">💬 문자상담</a>
+        </div>
+      </div>`;
+    return;
+  }
   const n=sels.length;
   if(n===0){
     document.getElementById('pempty').style.display='block';
