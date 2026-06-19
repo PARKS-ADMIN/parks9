@@ -8,11 +8,11 @@
 <style>
 :root{
   --navy:#1a2870;--navy2:#111d5e;--bg:#f2f4fb;
-  --avail:#14532d;--avail-bg:#dcfce7;
-  --occ:#1e40af;--occ-bg:#dbeafe;
+  --avail:#15803d;--avail-bg:#bbf7d0;
+  --occ:#64748b;--occ-bg:#eef1f5;
   --exp:#d97706;--exp-bg:#fef3c7;
   --over:#dc2626;--over-bg:#fee2e2;
-  --pillar:#cbd5e1;--border:#e0e4f0;
+  --pillar:#94a3b8;--border:#e0e4f0;
   --sel1:#15803d;--sel2:#b45309;--sel3:#7c3aed;--sel4:#c2410c;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -68,11 +68,11 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 
 /* UNIT */
 .u{border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .17s;position:relative;font-family:'Space Mono',monospace;border:2px solid transparent;user-select:none}
-.u:not(.pillar):not(.occ):hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.15);filter:brightness(1.05)}
-.u.pillar{background:var(--pillar);border-color:#b8bcc8;cursor:default}
-/* 상태별 색상 — H열 잔여일 기준 */
-.u.avail  {background:var(--avail-bg);border-color:#4ade80;color:var(--avail)}
-.u.active {background:var(--occ-bg);border-color:#60a5fa;color:var(--occ)}
+.u:not(.pillar):hover{transform:translateY(-2px);box-shadow:0 4px 14px rgba(0,0,0,.15);filter:brightness(1.03)}
+.u.pillar{background:repeating-linear-gradient(45deg,#cbd5e1,#cbd5e1 4px,#aeb8c7 4px,#aeb8c7 8px);border-color:#94a3b8;cursor:default}
+/* 상태별 색상 */
+.u.avail  {background:var(--avail-bg);border-color:#22c55e;color:var(--avail)}
+.u.active {background:var(--occ-bg);border-color:#cbd5e1;color:var(--occ)}
 .u.expiring{background:var(--exp-bg);border-color:#fde68a;color:var(--exp)}
 .u.overdue {background:var(--over-bg);border-color:#fca5a5;color:var(--over)}
 .u.s1{background:var(--sel1)!important;border-color:#166534!important;color:#fff!important;transform:translateY(-2px);box-shadow:0 4px 14px rgba(21,128,61,.4)!important;outline:3px solid #86efac;outline-offset:1px}
@@ -223,9 +223,9 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 </div>
 
 <div class="legend">
-  <span class="leg"><span class="lc" style="background:var(--avail-bg);border:1px solid #4ade80"></span>이용가능</span>
-  <span class="leg"><span class="lc" style="background:var(--occ-bg);border:1px solid #60a5fa"></span>사용중</span>
-  <span class="leg"><span class="lc" style="background:var(--pillar)"></span>기둥</span>
+  <span class="leg"><span class="lc" style="background:var(--avail-bg);border:1px solid #22c55e"></span>이용가능</span>
+  <span class="leg"><span class="lc" style="background:var(--occ-bg);border:1px solid #cbd5e1"></span>사용중</span>
+  <span class="leg"><span class="lc" style="background:repeating-linear-gradient(45deg,#cbd5e1,#cbd5e1 3px,#aeb8c7 3px,#aeb8c7 6px);border:1px solid #94a3b8"></span>기둥</span>
 </div>
 
 <div class="mode-bar" style="display:none">
@@ -419,7 +419,7 @@ function cell(id,w,h){
   const occ=isOcc(id), si=selIdx(id);
   const dim=dimCheck(id);
   const cls=getUnitCls(id)+(dim?' mdim':'');
-  const clickable=!occ&&!dim;
+  const clickable=!dim;
   const style=`width:${w}px;height:${h}px`;
   return`<div class="${cls}" ${clickable?`onclick="pick('${id}')"`:''}  style="${style}"><div class="uid">${id}</div>${h>=40?`<div class="utype">${isHalf(id)?'하프':'원룸'}</div>`:''}</div>`;
 }
@@ -453,8 +453,8 @@ function renderMap(){
     if(!p){h+=pillarCell(S*2+4,S);return;}
     const[l,r]=p;
     h+=`<div style="display:flex;flex-direction:column;gap:3px">`;
-    if(l){const cls=getUnitCls(l)+(dimCheck(l)?' mdim':'');const occ=isOcc(l);h+=`<div class="${cls}" ${!occ&&!dimCheck(l)?`onclick="pick('${l}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${l}</div></div>`;}
-    if(r){const cls=getUnitCls(r)+(dimCheck(r)?' mdim':'');const occ=isOcc(r);h+=`<div class="${cls}" ${!occ&&!dimCheck(r)?`onclick="pick('${r}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${r}</div></div>`;}
+    if(l){const cls=getUnitCls(l)+(dimCheck(l)?' mdim':'');h+=`<div class="${cls}" ${!dimCheck(l)?`onclick="pick('${l}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${l}</div></div>`;}
+    if(r){const cls=getUnitCls(r)+(dimCheck(r)?' mdim':'');h+=`<div class="${cls}" ${!dimCheck(r)?`onclick="pick('${r}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${r}</div></div>`;}
     h+=`</div>`;
   });
   h+=`</div></div>`;
@@ -489,8 +489,8 @@ function pick(id){
 function openMobileSheet(id){
   const st=UNIT_STATUS[id]||'avail';
   const isAvail=st==='avail';
-  const stTxt=isAvail?'🟢 이용가능':'🔵 사용중';
-  const stColor=isAvail?'#16a34a':'#1e40af';
+  const stTxt=isAvail?'🟢 이용가능':'⬜ 사용중';
+  const stColor=isAvail?'#16a34a':'#64748b';
 
   // 헤더 제목
   document.getElementById('shttl').innerHTML=
@@ -593,7 +593,7 @@ function updatePanel(){
   document.getElementById('pempty').style.display='none';
   const id=sels[0];
   const st=UNIT_STATUS[id]||'avail';
-  const stTxt=st==='avail'?'🟢 이용가능':st==='active'?'🔵 사용중':st==='expiring'?'🟡 만료임박':'🔴 연체';
+  const stTxt=st==='avail'?'🟢 이용가능':st==='active'?'⬜ 사용중':st==='expiring'?'🟡 만료임박':'🔴 연체';
   const pd=document.getElementById('pdet');pd.style.display='block';
   pd.innerHTML=`
     <div style="text-align:center;padding:12px 0 8px">
