@@ -791,9 +791,9 @@ function openEdit(id){
     ['type','타입','select',['하프룸','원룸','투룸','쓰리룸','포룸']],
     ['name','고객명','text'],
     ['phone','연락처','text'],
-    ['start','계약시작','date'],
-    ['end','계약종료','date'],
-    ['days','잔여일(숫자)','number'],
+    ['start','계약시작 (예: 20250101)','smartdate'],
+    ['end','계약종료 (예: 20250101)','smartdate'],
+    ['days','잔여일 (자동계산)','readonly'],
     ['amount','금액(원)','number'],
     ['goods','보관물품','text'],
     ['pay','결제수단','text'],
@@ -808,16 +808,59 @@ function openEdit(id){
           <select id="ef-${k}" style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px">
           ${opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select></div>`;
       }
+      if(type==='smartdate'){
+        return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
+          <input id="ef-${k}" type="text" inputmode="numeric" value="${String(val).replace(/"/g,'&quot;')}"
+            oninput="onDateInput(this)" onblur="formatDateField(this);recalcDays()"
+            style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px"></div>`;
+      }
+      if(type==='readonly'){
+        const dispVal = val!==''&&val!=null ? (Number(val)<0?`연체 ${Math.abs(val)}일`:`D-${val}`) : '—';
+        return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
+          <input id="ef-${k}" type="hidden" value="${val}">
+          <div id="ef-${k}-disp" style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px;background:var(--sur2);color:#555">${dispVal}</div></div>`;
+      }
       return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
         <input id="ef-${k}" type="${type}" value="${String(val).replace(/"/g,'&quot;')}" style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px"></div>`;
     }).join('');
   document.getElementById('edit-modal').classList.add('on');
   document.body.style.overflow='hidden';
 }
+
+// 날짜 입력 중: 숫자만 허용
+function onDateInput(el){
+  el.value = el.value.replace(/[^0-9-]/g,'');
+}
+// 날짜 포맷 정리: 20250101 → 2025-01-01
+function formatDateField(el){
+  let v = el.value.replace(/[^0-9]/g,'');
+  if(v.length===8){
+    el.value = v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8);
+  }
+}
+// 잔여일 자동 계산 (계약종료 - 오늘)
+function recalcDays(){
+  const endEl=document.getElementById('ef-end');
+  const daysEl=document.getElementById('ef-days');
+  const dispEl=document.getElementById('ef-days-disp');
+  if(!endEl||!daysEl) return;
+  const endStr=endEl.value.trim();
+  const m=endStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m){ return; }
+  const end=new Date(+m[1], +m[2]-1, +m[3]);
+  const today=new Date(); today.setHours(0,0,0,0);
+  const diff=Math.round((end-today)/86400000);
+  daysEl.value=diff;
+  if(dispEl) dispEl.textContent = diff<0?`연체 ${Math.abs(diff)}일`:`D-${diff}`;
+}
 function closeEditModal(){document.getElementById('edit-modal').classList.remove('on');document.body.style.overflow='';}
 
 async function saveEdit(){
   if(!editId) return;
+  // 저장 직전 날짜 포맷 정리 + 잔여일 재계산
+  const sEl=document.getElementById('ef-start'); if(sEl) formatDateField(sEl);
+  const eEl=document.getElementById('ef-end'); if(eEl) formatDateField(eEl);
+  recalcDays();
   const g=k=>document.getElementById('ef-'+k).value.trim();
   const daysVal = g('days')===''?null:Number(g('days'));
   const amtVal = g('amount')===''?null:Number(g('amount'));
