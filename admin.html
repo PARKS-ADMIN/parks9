@@ -233,6 +233,7 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
     <div class="sb-item on" onclick="showPage('dashboard',this)"><span class="sb-ic">📊</span>대시보드</div>
     <div class="sb-item" onclick="showPage('floormap',this)"><span class="sb-ic">🗺️</span>창고 배치도</div>
     <div class="sb-sec">운영</div>
+    <div class="sb-item" onclick="showPage('inquiries',this)"><span class="sb-ic">💬</span>상담 문의<span class="sb-bdg" id="sb-inq-cnt">0</span></div>
     <div class="sb-item" onclick="showPage('customers',this)"><span class="sb-ic">👤</span>고객 관리</div>
     <div class="sb-item" onclick="showPage('expiry',this)"><span class="sb-ic">📅</span>만료 임박<span class="sb-bdg" id="sb-exp-cnt">0</span></div>
     <div class="sb-item" onclick="showPage('overdue',this)"><span class="sb-ic">⚠️</span>연체 관리<span class="sb-bdg" id="sb-ov-cnt">0</span></div>
@@ -262,6 +263,7 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
     <div class="page-tabs">
       <button class="ptab on" onclick="showPage('dashboard',this)">📊 대시보드</button>
       <button class="ptab" onclick="showPage('floormap',this)">🗺️ 배치도</button>
+      <button class="ptab" onclick="showPage('inquiries',this)">💬 문의</button>
       <button class="ptab" onclick="showPage('customers',this)">👤 고객목록</button>
       <button class="ptab" onclick="showPage('expiry',this)">📅 만료임박</button>
       <button class="ptab" onclick="showPage('overdue',this)">⚠️ 연체</button>
@@ -327,6 +329,26 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
       </div>
     </div>
 
+    <!-- 상담 문의 -->
+    <div class="page-section" id="page-inquiries">
+      <div class="card">
+        <div class="ch">
+          <h2>상담 문의 <span style="font-size:12px;color:var(--muted);font-weight:400" id="inq-count"></span></h2>
+          <button onclick="loadInquiries()" style="font-size:11px;background:var(--sur2);border:1px solid var(--bdr);border-radius:6px;padding:5px 12px;cursor:pointer">🔄 새로고침</button>
+        </div>
+        <div id="inq-loading" style="text-align:center;padding:32px;color:var(--muted)">
+          <div style="font-size:24px;margin-bottom:8px">⏳</div>
+          <p style="font-size:13px">불러오는 중...</p>
+        </div>
+        <div style="overflow-x:auto;display:none" id="inq-table-wrap">
+          <table class="ctbl">
+            <thead><tr><th>상태</th><th>접수시간</th><th>창고</th><th>고객명</th><th>연락처</th><th>문의내용</th><th>관리</th></tr></thead>
+            <tbody id="inq-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- 고객목록 -->
     <div class="page-section" id="page-customers">
       <div class="card">
@@ -388,7 +410,7 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
         </div>
         <div style="overflow-x:auto;display:none" id="ended-table-wrap">
           <table class="ctbl">
-            <thead><tr><th>창고</th><th>타입</th><th>고객명</th><th>연락처</th><th>계약시작</th><th>계약종료</th><th>이용기간</th><th>금액</th><th>결제수단</th><th>메모</th></tr></thead>
+            <thead><tr><th>창고</th><th>타입</th><th>고객명</th><th>연락처</th><th>계약시작</th><th>계약종료</th><th>이용기간</th><th>금액</th><th>결제수단</th><th>메모</th><th>관리</th></tr></thead>
             <tbody id="ended-tbody"></tbody>
           </table>
         </div>
@@ -474,6 +496,7 @@ async function loadAllData() {
 
     refreshAll();
     updateTodayBadge();
+    updateInqBadge();
     console.log('✅ 로드 완료 — 창고:', UNITS.length, '/ 계약:', CUSTS.length);
   } catch(e) {
     console.error('로드 실패:', e);
@@ -733,7 +756,7 @@ async function loadEndedData() {
         const d=Math.round((new Date(r.contract_end)-new Date(r.contract_start))/86400000);
         if(!isNaN(d)) days=d;
       }
-      return {unit:r.unit_no,type:r.unit_type||'',name:r.customer_name||'',phone:r.phone||'',start:r.contract_start||'',end:r.contract_end||'',days:days,amount:r.amount||'',pay:r.payment_method||'',memo:r.memo||''};
+      return {dbId:r.id,unit:r.unit_no,type:r.unit_type||'',name:r.customer_name||'',phone:r.phone||'',start:r.contract_start||'',end:r.contract_end||'',days:days,amount:r.amount||'',pay:r.payment_method||'',memo:r.memo||''};
     }).filter(Boolean);
     buildEndedTable(ENDED_ALL);
   } catch(e) {
@@ -755,12 +778,80 @@ function buildEndedTable(list) {
       <td style="text-align:right">${c.amount?parseInt(String(c.amount).replace(/,/g,'')).toLocaleString()+'원':'—'}</td>
       <td style="font-size:11px">${c.pay||'—'}</td>
       <td style="font-size:11px;color:var(--muted)">${c.memo||''}</td>
+      <td style="white-space:nowrap">
+        <button onclick="openEndedEdit(${c.dbId})" style="padding:4px 8px;border:1px solid var(--bdr);background:var(--sur2);border-radius:6px;font-size:11px;cursor:pointer;margin-right:3px">수정</button>
+        <button onclick="deleteEnded(${c.dbId},'${c.name||c.unit}')" style="padding:4px 8px;border:1px solid #fca5a5;background:#fef2f2;color:#dc2626;border-radius:6px;font-size:11px;cursor:pointer">삭제</button>
+      </td>
     </tr>`).join('');
 }
 function filterEnded(v){
   if(!v){buildEndedTable(ENDED_ALL);return;}
   const q=v.toLowerCase();
   buildEndedTable(ENDED_ALL.filter(c=>(c.unit&&c.unit.toLowerCase().includes(q))||(c.name&&c.name.toLowerCase().includes(q))||(c.phone&&c.phone.includes(q))));
+}
+
+// 종료고객 수정
+let endedEditId=null;
+function openEndedEdit(dbId){
+  const c=ENDED_ALL.find(x=>x.dbId===dbId);
+  if(!c) return;
+  endedEditId=dbId;
+  const f=[
+    ['unit','창고번호','text'],['type','타입','text'],['name','고객명','text'],
+    ['phone','연락처','text'],['start','계약시작 (예:20250101)','smartdate'],
+    ['end','계약종료 (예:20250101)','smartdate'],['amount','금액(원)','number'],
+    ['pay','결제수단','text'],['memo','메모','text'],
+  ];
+  document.getElementById('edit-fields').innerHTML=
+    `<div style="grid-column:1/3;font-size:13px;color:var(--muted);margin-bottom:4px">종료고객 정보 수정</div>`+
+    f.map(([k,label,type])=>{
+      const val=c[k]!=null?c[k]:'';
+      if(type==='smartdate'){
+        return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
+          <input id="ee-${k}" type="text" inputmode="numeric" value="${String(val).replace(/"/g,'&quot;')}"
+            oninput="onDateInput(this)" onblur="formatDateField(this)"
+            style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px"></div>`;
+      }
+      return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
+        <input id="ee-${k}" type="${type}" value="${String(val).replace(/"/g,'&quot;')}" style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px"></div>`;
+    }).join('');
+  // 저장 버튼을 종료고객용으로 교체
+  document.getElementById('edit-save-btn').setAttribute('onclick','saveEndedEdit()');
+  document.getElementById('edit-modal').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+
+async function saveEndedEdit(){
+  if(!endedEditId) return;
+  const sEl=document.getElementById('ee-start'); if(sEl) formatDateField(sEl);
+  const eEl=document.getElementById('ee-end'); if(eEl) formatDateField(eEl);
+  const g=k=>document.getElementById('ee-'+k).value.trim();
+  const payload={
+    unit_no:g('unit')||null, unit_type:g('type')||null, customer_name:g('name')||null,
+    phone:g('phone')||null, contract_start:g('start')||null, contract_end:g('end')||null,
+    amount:g('amount')===''?null:Number(g('amount')), payment_method:g('pay')||null, memo:g('memo')||null
+  };
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/ended_customers?id=eq.${endedEditId}`,{
+      method:'PATCH',headers:writeHeaders(),body:JSON.stringify(payload)});
+    if(!res.ok) throw new Error('저장 실패 '+res.status);
+    closeEditModal();
+    // 저장 버튼 원래대로 복구
+    document.getElementById('edit-save-btn').setAttribute('onclick','saveEdit()');
+    endedEditId=null;
+    ENDED_ALL=[]; await loadEndedData();
+    alert('✅ 종료고객 정보 저장 완료!');
+  }catch(e){ alert('❌ 저장 실패: '+e.message); }
+}
+
+async function deleteEnded(dbId,name){
+  if(!confirm(`종료고객 "${name}" 기록을 완전히 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.`)) return;
+  try{
+    const res=await fetch(`${SUPABASE_URL}/rest/v1/ended_customers?id=eq.${dbId}`,{
+      method:'DELETE',headers:writeHeaders()});
+    if(!res.ok) throw new Error('삭제 실패 '+res.status);
+    ENDED_ALL=[]; await loadEndedData();
+  }catch(e){ alert('❌ 삭제 실패: '+e.message); }
 }
 
 // ══════════════════════════════════════════════════════
@@ -782,10 +873,11 @@ function showPage(id, triggerEl) {
   document.querySelectorAll('.ptab,.sb-item').forEach(el=>el.classList.remove('on'));
   document.getElementById('page-'+id).classList.add('on');
   if(triggerEl) triggerEl.classList.add('on');
-  const titles={dashboard:'운영 현황 대시보드',floormap:'창고 배치도',customers:'고객 관리',expiry:'계약 만료 관리',overdue:'연체 관리',ended:'종료 고객 이력'};
+  const titles={dashboard:'운영 현황 대시보드',floormap:'창고 배치도',inquiries:'상담 문의',customers:'고객 관리',expiry:'계약 만료 관리',overdue:'연체 관리',ended:'종료 고객 이력'};
   document.getElementById('tb-ttl').textContent=titles[id]||id;
   if(id==='floormap') setTimeout(()=>renderAdminMap('admin-map2','m2'),50);
   if(id==='ended'&&ENDED_ALL.length===0) loadEndedData();
+  if(id==='inquiries') loadInquiries();
   closeSB();
 }
 function toggleSB(){const sb=document.getElementById('sb');const ov=document.getElementById('sb-ov');const o=sb.classList.toggle('open');ov.classList.toggle('on',o);document.body.style.overflow=o?'hidden':'';}
@@ -834,6 +926,7 @@ function openEdit(id){
       return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
         <input id="ef-${k}" type="${type}" value="${String(val).replace(/"/g,'&quot;')}" style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px"></div>`;
     }).join('');
+  document.getElementById('edit-save-btn').setAttribute('onclick','saveEdit()');
   document.getElementById('edit-modal').classList.add('on');
   document.body.style.overflow='hidden';
 }
@@ -973,6 +1066,68 @@ async function exportExcel(){
     alert('❌ 내보내기 실패: '+e.message);
   }
 }
+
+// 신규 문의 배지만 갱신
+async function updateInqBadge(){
+  try{
+    const rows=await sbGet('inquiries','select=status');
+    const newCnt=rows.filter(r=>r.status==='신규').length;
+    const bdg=document.getElementById('sb-inq-cnt');
+    if(bdg){ bdg.textContent=newCnt; bdg.style.display=newCnt>0?'':'none'; }
+  }catch(e){}
+}
+// ══════════════════════════════════════════════════════
+// 상담 문의 관리
+// ══════════════════════════════════════════════════════
+async function loadInquiries(){
+  const loading=document.getElementById('inq-loading');
+  const wrap=document.getElementById('inq-table-wrap');
+  loading.style.display='block'; wrap.style.display='none';
+  try{
+    const rows=await sbGet('inquiries','select=*&order=created_at.desc');
+    loading.style.display='none'; wrap.style.display='block';
+    const newCnt=rows.filter(r=>r.status==='신규').length;
+    document.getElementById('inq-count').textContent=`(전체 ${rows.length}건 · 신규 ${newCnt}건)`;
+    const bdg=document.getElementById('sb-inq-cnt');
+    if(bdg){ bdg.textContent=newCnt; bdg.style.display=newCnt>0?'':'none'; }
+    document.getElementById('inq-tbody').innerHTML = rows.length===0
+      ? `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--muted)">아직 들어온 문의가 없습니다.</td></tr>`
+      : rows.map(r=>{
+        const isNew=r.status==='신규';
+        const dt=new Date(r.created_at);
+        const dstr=`${dt.getMonth()+1}/${dt.getDate()} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+        return `<tr style="${isNew?'background:#fffbeb':''}">
+          <td>${isNew?'<span style="background:#f59e0b;color:#fff;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:700">신규</span>':'<span style="color:#9ca3af;font-size:11px">처리완료</span>'}</td>
+          <td class="mono" style="font-size:11px">${dstr}</td>
+          <td class="mono" style="font-size:11px">${r.unit_type||r.unit_no||'—'}</td>
+          <td><strong>${r.customer_name||'—'}</strong></td>
+          <td class="mono" style="font-size:11px"><a href="tel:${r.phone}" style="color:var(--navy)">${r.phone||'—'}</a></td>
+          <td style="font-size:11px;color:var(--muted);max-width:200px">${r.message||'—'}</td>
+          <td style="white-space:nowrap">
+            ${isNew?`<button onclick="markInquiryDone(${r.id})" style="padding:4px 8px;border:1px solid #86efac;background:#f0fdf4;color:#16a34a;border-radius:6px;font-size:11px;cursor:pointer;margin-right:3px">처리완료</button>`:''}
+            <button onclick="deleteInquiry(${r.id})" style="padding:4px 8px;border:1px solid #fca5a5;background:#fef2f2;color:#dc2626;border-radius:6px;font-size:11px;cursor:pointer">삭제</button>
+          </td>
+        </tr>`;
+      }).join('');
+  }catch(e){
+    loading.innerHTML='<p style="color:#aaa;padding:20px;font-size:13px">불러오지 못했습니다.</p>';
+  }
+}
+async function markInquiryDone(id){
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/inquiries?id=eq.${id}`,{
+      method:'PATCH',headers:writeHeaders(),body:JSON.stringify({status:'처리완료'})});
+    loadInquiries();
+  }catch(e){ alert('처리 실패: '+e.message); }
+}
+async function deleteInquiry(id){
+  if(!confirm('이 문의를 삭제하시겠습니까?')) return;
+  try{
+    await fetch(`${SUPABASE_URL}/rest/v1/inquiries?id=eq.${id}`,{
+      method:'DELETE',headers:writeHeaders()});
+    loadInquiries();
+  }catch(e){ alert('삭제 실패: '+e.message); }
+}
 </script>
 <div id="edit-modal">
   <div style="background:var(--sur);border-radius:14px;padding:24px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)">
@@ -983,7 +1138,7 @@ async function exportExcel(){
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="edit-fields"></div>
     <div style="display:flex;gap:8px;margin-top:20px;justify-content:flex-end">
       <button onclick="closeEditModal()" style="padding:9px 18px;border-radius:8px;border:1px solid var(--bdr);background:var(--sur2);font-size:13px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">취소</button>
-      <button onclick="saveEdit()" style="padding:9px 18px;border-radius:8px;border:none;background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">저장</button>
+      <button id="edit-save-btn" onclick="saveEdit()" style="padding:9px 18px;border-radius:8px;border:none;background:var(--navy);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif">저장</button>
     </div>
   </div>
 </div>
