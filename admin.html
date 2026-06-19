@@ -798,7 +798,7 @@ function openEndedEdit(dbId){
   endedEditId=dbId;
   const f=[
     ['unit','창고번호','text'],['type','타입','text'],['name','고객명','text'],
-    ['phone','연락처','text'],['start','계약시작 (예:20250101)','smartdate'],
+    ['phone','연락처 (예:01012345678)','smartphone'],['start','계약시작 (예:20250101)','smartdate'],
     ['end','계약종료 (예:20250101)','smartdate'],['amount','금액(원)','number'],
     ['pay','결제수단','text'],['memo','메모','text'],
   ];
@@ -810,6 +810,12 @@ function openEndedEdit(dbId){
         return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
           <input id="ee-${k}" type="text" inputmode="numeric" value="${String(val).replace(/"/g,'&quot;')}"
             oninput="onDateInput(this)" onblur="formatDateField(this)"
+            style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px"></div>`;
+      }
+      if(type==='smartphone'){
+        return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
+          <input id="ee-${k}" type="text" inputmode="numeric" value="${String(val).replace(/"/g,'&quot;')}"
+            oninput="onPhoneInput(this)" onblur="formatPhoneField(this)"
             style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px"></div>`;
       }
       return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
@@ -825,6 +831,7 @@ async function saveEndedEdit(){
   if(!endedEditId) return;
   const sEl=document.getElementById('ee-start'); if(sEl) formatDateField(sEl);
   const eEl=document.getElementById('ee-end'); if(eEl) formatDateField(eEl);
+  const pEl=document.getElementById('ee-phone'); if(pEl) formatPhoneField(pEl);
   const g=k=>document.getElementById('ee-'+k).value.trim();
   const payload={
     unit_no:g('unit')||null, unit_type:g('type')||null, customer_name:g('name')||null,
@@ -893,7 +900,7 @@ function openEdit(id){
   const f=[
     ['type','타입','select',['하프룸','원룸','투룸','쓰리룸','포룸']],
     ['name','고객명','text'],
-    ['phone','연락처','text'],
+    ['phone','연락처 (예: 01012345678)','smartphone'],
     ['start','계약시작 (예: 20250101)','smartdate'],
     ['end','계약종료 (예: 20250101)','smartdate'],
     ['days','잔여일 (자동계산)','readonly'],
@@ -915,6 +922,12 @@ function openEdit(id){
         return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
           <input id="ef-${k}" type="text" inputmode="numeric" value="${String(val).replace(/"/g,'&quot;')}"
             oninput="onDateInput(this)" onblur="formatDateField(this);recalcDays()"
+            style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px"></div>`;
+      }
+      if(type==='smartphone'){
+        return `<div><label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">${label}</label>
+          <input id="ef-${k}" type="text" inputmode="numeric" value="${String(val).replace(/"/g,'&quot;')}"
+            oninput="onPhoneInput(this)" onblur="formatPhoneField(this)"
             style="width:100%;padding:8px;border:1px solid var(--bdr);border-radius:7px;font-size:13px"></div>`;
       }
       if(type==='readonly'){
@@ -942,6 +955,23 @@ function formatDateField(el){
     el.value = v.slice(0,4)+'-'+v.slice(4,6)+'-'+v.slice(6,8);
   }
 }
+// 전화번호 입력 중: 숫자만 허용
+function onPhoneInput(el){
+  el.value = el.value.replace(/[^0-9-]/g,'');
+}
+// 전화번호 포맷 정리: 01012345678 → 010-1234-5678 (콤마로 여러 번호도 처리)
+function formatPhoneField(el){
+  el.value = el.value.split(',').map(part=>{
+    let v = part.replace(/[^0-9]/g,'');
+    if(v.length===11) return v.slice(0,3)+'-'+v.slice(3,7)+'-'+v.slice(7,11);
+    if(v.length===10){
+      // 0XX-XXX(X)-XXXX 형태 (서울 02 등 지역번호 포함 가능)
+      if(v.startsWith('02')) return v.slice(0,2)+'-'+v.slice(2,6)+'-'+v.slice(6,10);
+      return v.slice(0,3)+'-'+v.slice(3,6)+'-'+v.slice(6,10);
+    }
+    return part.trim();
+  }).join(', ');
+}
 // 잔여일 자동 계산 (계약종료 - 오늘)
 function recalcDays(){
   const endEl=document.getElementById('ef-end');
@@ -964,6 +994,7 @@ async function saveEdit(){
   // 저장 직전 날짜 포맷 정리 + 잔여일 재계산
   const sEl=document.getElementById('ef-start'); if(sEl) formatDateField(sEl);
   const eEl=document.getElementById('ef-end'); if(eEl) formatDateField(eEl);
+  const pEl=document.getElementById('ef-phone'); if(pEl) formatPhoneField(pEl);
   recalcDays();
   const g=k=>document.getElementById('ef-'+k).value.trim();
   const daysVal = g('days')===''?null:Number(g('days'));
