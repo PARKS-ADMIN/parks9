@@ -119,6 +119,15 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 /* PRICE MODAL */
 .price-modal-ov{display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
 .price-modal-ov.on{display:flex;align-items:center;justify-content:center}
+.inq-ov{display:none;position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)}
+.inq-ov.on{display:flex;align-items:center;justify-content:center}
+.inq-box{background:#fff;border-radius:16px;width:min(400px,92vw);box-shadow:0 8px 40px rgba(0,0,0,.3);overflow:hidden}
+.inq-head{background:var(--navy);color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between}
+.inq-body{padding:20px}
+.inq-field{margin-bottom:14px}
+.inq-field label{display:block;font-size:12px;color:#666;font-weight:700;margin-bottom:5px}
+.inq-field input,.inq-field textarea{width:100%;padding:11px 13px;border:1.5px solid #e0e4f0;border-radius:9px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box}
+.inq-field input:focus,.inq-field textarea:focus{border-color:var(--navy)}
 .price-modal{background:#fff;border-radius:16px;width:min(540px,95vw);max-height:90dvh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)}
 .pm-head{background:var(--navy);color:#fff;padding:18px 20px;border-radius:16px 16px 0 0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:1}
 .pm-head h2{font-size:16px;font-weight:900}
@@ -143,6 +152,35 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
   <div class="hd-btns">
     <button onclick="openPriceModal()" class="hd-btn">💰 요금안내</button>
     <a href="tel:010-6464-1666" class="hd-btn">📞 010-6464-1666</a>
+  </div>
+</div>
+
+<!-- 상담 문의 모달 -->
+<div class="inq-ov" id="inq-modal" onclick="if(event.target===this)closeInquiry()">
+  <div class="inq-box">
+    <div class="inq-head">
+      <div>
+        <div style="font-size:16px;font-weight:800">💬 상담 문의</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:2px">선택 창고: <span id="inq-unit-label" style="font-family:'Space Mono',monospace"></span></div>
+      </div>
+      <button onclick="closeInquiry()" style="width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:14px;cursor:pointer">✕</button>
+    </div>
+    <div class="inq-body">
+      <div class="inq-field">
+        <label>이름 *</label>
+        <input id="inq-name" type="text" placeholder="성함을 입력해주세요">
+      </div>
+      <div class="inq-field">
+        <label>연락처 *</label>
+        <input id="inq-phone" type="tel" inputmode="numeric" placeholder="010-0000-0000">
+      </div>
+      <div class="inq-field">
+        <label>문의 내용 (선택)</label>
+        <textarea id="inq-msg" rows="3" placeholder="보관 예정 물품, 희망 입실일 등"></textarea>
+      </div>
+      <button id="inq-submit" onclick="submitInquiry()" style="width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit">문의 접수</button>
+      <div style="text-align:center;margin-top:12px;font-size:12px;color:#999">또는 전화 문의 <a href="tel:010-6464-1666" style="color:var(--navy);font-weight:700;text-decoration:none">010-6464-1666</a></div>
+    </div>
   </div>
 </div>
 
@@ -338,6 +376,56 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 // ── Supabase 설정 ───────────────────────────────────
 const SUPABASE_URL = 'https://zsiklzhtotlaozuxdumb.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_y1jh83wxGBH6Xp0PcIxhwQ_Kr03Ibeb';
+// 텔레그램 알림 설정
+const TG_TOKEN = '8616968085:AAHzc5o5LQ4AQJFGxCExPiW5BcIhPAJFyos';
+const TG_CHATS = ['6947950592']; // 알림 받을 챗ID (여러 명이면 추가)
+
+// 상담 문의 모달 열기
+let inqUnit=null;
+function openInquiry(unitId){
+  inqUnit=unitId;
+  const type = (typeof isHalf==='function' && isHalf(unitId)) ? '하프룸' : '원룸';
+  document.getElementById('inq-unit-label').textContent = unitId+' ('+type+')';
+  document.getElementById('inq-name').value='';
+  document.getElementById('inq-phone').value='';
+  document.getElementById('inq-msg').value='';
+  document.getElementById('inq-modal').classList.add('on');
+  document.body.style.overflow='hidden';
+  closeSh&&closeSh();
+}
+function closeInquiry(){document.getElementById('inq-modal').classList.remove('on');document.body.style.overflow='';}
+
+async function submitInquiry(){
+  const name=document.getElementById('inq-name').value.trim();
+  const phone=document.getElementById('inq-phone').value.trim();
+  const msg=document.getElementById('inq-msg').value.trim();
+  const btn=document.getElementById('inq-submit');
+  if(!name||!phone){ alert('이름과 연락처를 입력해주세요.'); return; }
+  btn.textContent='접수 중...'; btn.disabled=true;
+  const type=document.getElementById('inq-unit-label').textContent;
+  try{
+    // 1. DB 저장
+    await fetch(`${SUPABASE_URL}/rest/v1/inquiries`,{
+      method:'POST',
+      headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify({unit_no:inqUnit,unit_type:type,customer_name:name,phone:phone,message:msg||null})
+    });
+    // 2. 텔레그램 알림
+    const text=`🔔 새 상담 문의\n\n창고: ${type}\n이름: ${name}\n연락처: ${phone}\n내용: ${msg||'(없음)'}\n\n시간: ${new Date().toLocaleString('ko-KR')}`;
+    for(const cid of TG_CHATS){
+      fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({chat_id:cid,text})
+      }).catch(()=>{});
+    }
+    closeInquiry();
+    alert('✅ 상담 문의가 접수되었습니다!\n빠른 시일 내에 연락드리겠습니다.');
+  }catch(e){
+    alert('❌ 접수 실패. 전화로 문의해주세요.\n010-6464-1666');
+    btn.textContent='문의 접수'; btn.disabled=false;
+  }
+}
+
 
 // ── 가격표 ─────────────────────────────────────────
 const PR={half:{1:29000,3:78000,6:139000,12:244000},single:{1:59000,3:159000,6:283000,12:496000},double:{1:99000,3:267000,6:475000,12:832000},triple:{1:139000,3:375000,6:667000,12:1165000},quad:{1:189000,3:510000,6:907000,12:1588000}};
@@ -500,17 +588,18 @@ function openMobileSheet(id){
   // 바텀시트 본문
   let b='';
 
-  // 이용가능이면 전화/문자 버튼 크게
+  // 이용가능이면 상담문의 버튼 크게
   if(isAvail){
     b+=`<div style="font-size:13px;color:#555;line-height:1.8;margin-bottom:14px">
-          이용 가능한 창고입니다.<br>문의/예약은 아래 연락처로 해주세요.
+          이용 가능한 창고입니다.<br>아래 버튼으로 상담을 신청하세요.
         </div>
+        <button onclick="openInquiry('${id}')" style="width:100%;background:var(--navy);color:#fff;padding:14px;border-radius:10px;font-size:15px;font-weight:700;border:none;margin-bottom:10px;font-family:'Noto Sans KR',sans-serif">💬 상담 문의하기</button>
         <div style="display:flex;gap:10px;margin-bottom:20px">
-          <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--navy);color:#fff;padding:14px;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none">📞 전화문의</a>
-          <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#16a34a;color:#fff;padding:14px;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none">💬 문자문의</a>
+          <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#f0f3fb;color:var(--navy);padding:12px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none">📞 전화</a>
+          <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#f0f3fb;color:var(--navy);padding:12px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none">💬 문자</a>
         </div>`;
   } else {
-    b+=`<div style="background:#eff6ff;border-radius:9px;padding:11px 13px;margin-bottom:16px;font-size:13px;color:#1e40af;">
+    b+=`<div style="background:#f1f5f9;border-radius:9px;padding:11px 13px;margin-bottom:16px;font-size:13px;color:#64748b;">
           현재 사용 중인 창고입니다.
         </div>`;
   }
@@ -599,10 +688,11 @@ function updatePanel(){
     <div style="text-align:center;padding:12px 0 8px">
       <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:var(--navy)">${id}</div>
       <div style="font-size:13px;margin-top:6px">${stTxt}</div>
-      ${st==='avail'?`<div style="margin-top:14px;font-size:12px;color:#666;line-height:1.7">이용 가능한 창고입니다.<br>문의/예약은 아래 연락처로 해주세요.</div>
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:var(--navy);color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">📞 전화</a>
-        <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:#16a34a;color:#fff;padding:9px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">💬 문자</a>
+      ${st==='avail'?`<div style="margin-top:14px;font-size:12px;color:#666;line-height:1.7">이용 가능한 창고입니다.<br>아래 버튼으로 상담을 신청하세요.</div>
+      <button onclick="openInquiry('${id}')" style="width:100%;margin-top:12px;background:var(--navy);color:#fff;padding:11px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;border:none;font-family:'Noto Sans KR',sans-serif">💬 상담 문의하기</button>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <a href="tel:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:#f0f3fb;color:var(--navy);padding:9px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">📞 전화</a>
+        <a href="sms:010-6464-1666" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;background:#f0f3fb;color:var(--navy);padding:9px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">💬 문자</a>
       </div>`
       :`<div style="margin-top:10px;font-size:12px;color:#888">현재 사용중인 창고입니다.</div>`}
     </div>`;
