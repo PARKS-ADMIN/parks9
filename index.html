@@ -50,9 +50,8 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 .mb.on .mb-cnt{color:var(--navy);opacity:.6}
 
 /* SEL HINT */
-.sel-bar{display:none;background:#fffbeb;border-bottom:2px solid var(--exp);padding:8px 16px;align-items:center;gap:8px;font-size:12.5px;color:#92400e}
+.sel-bar{display:none;background:#f5f3ff;border-bottom:2px solid #a78bfa;padding:9px 16px;align-items:center;gap:8px;font-size:12.5px;color:#5b21b6;line-height:1.5}
 .sel-bar.on{display:flex}
-.sel-clear{margin-left:auto;font-size:11px;color:#b45309;cursor:pointer;text-decoration:underline;white-space:nowrap;background:none;border:none;font-family:'Noto Sans KR',sans-serif}
 
 /* LAYOUT */
 .body{display:grid;grid-template-columns:1fr 300px}
@@ -79,6 +78,13 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 .u.s2{background:var(--sel2)!important;border-color:#92400e!important;color:#fff!important;transform:translateY(-2px);box-shadow:0 4px 14px rgba(180,83,9,.4)!important;outline:3px solid #fde68a;outline-offset:1px}
 .u.s3{background:var(--sel3)!important;border-color:#5b21b6!important;color:#fff!important;transform:translateY(-2px);outline:3px solid #ddd6fe;outline-offset:1px}
 .u.s4{background:var(--sel4)!important;border-color:#9a3412!important;color:#fff!important;transform:translateY(-2px);outline:3px solid #fed7aa;outline-offset:1px}
+/* 콤보(투/쓰리/포룸) 모드 */
+.u.combo-double{background:#ede9fe!important;border-color:#a78bfa!important;color:#6d28d9!important;cursor:pointer;animation:comboPulse 1.8s ease-in-out infinite}
+.u.combo-triple{background:#fef3c7!important;border-color:#fbbf24!important;color:#92400e!important;cursor:pointer;animation:comboPulse 1.8s ease-in-out infinite}
+.u.combo-quad{background:#fee2e2!important;border-color:#f87171!important;color:#991b1b!important;cursor:pointer;animation:comboPulse 1.8s ease-in-out infinite}
+@keyframes comboPulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.25)}50%{box-shadow:0 0 0 4px rgba(124,58,237,.12)}}
+.u.combo-na{opacity:.25!important;cursor:default!important;filter:grayscale(.4)}
+.u.combo-na:hover{transform:none!important;box-shadow:none!important}
 .uid{font-size:10px;font-weight:700;line-height:1.1;text-align:center}
 .utype{font-size:7.5px;opacity:.75;margin-top:1.5px;text-align:center}
 
@@ -266,17 +272,15 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
   <span class="leg"><span class="lc" style="background:repeating-linear-gradient(45deg,#cbd5e1,#cbd5e1 3px,#aeb8c7 3px,#aeb8c7 6px);border:1px solid #94a3b8"></span>기둥</span>
 </div>
 
-<div class="mode-bar" style="display:none">
-  <button class="mb" onclick="setMode('half',this)">하프룸<span class="mb-cnt">90×90×100</span></button>
-  <button class="mb on" onclick="setMode('single',this)">원룸 (1칸)<span class="mb-cnt">90×90×210</span></button>
-  <button class="mb" onclick="setMode('double',this)">투룸 (2칸)<span class="mb-cnt">180×90×210</span></button>
-  <button class="mb" onclick="setMode('triple',this)">쓰리룸 (3칸)<span class="mb-cnt">270×90×210</span></button>
-  <button class="mb" onclick="setMode('quad',this)">포룸 (4칸)<span class="mb-cnt">360×90×210</span></button>
+<div class="mode-bar">
+  <button class="mb on" onclick="setMode('single',this)">📦 원룸 보기</button>
+  <button class="mb" onclick="setMode('double',this)">🔗 투룸 (2칸 연결)</button>
+  <button class="mb" onclick="setMode('triple',this)">🔗 쓰리룸 (3칸 연결)</button>
+  <button class="mb" onclick="setMode('quad',this)">🔗 포룸 (4칸 연결)</button>
 </div>
 
 <div class="sel-bar" id="sbar">
   <span id="sbar-txt"></span>
-  <button class="sel-clear" onclick="clearSel()">✕ 초기화</button>
 </div>
 
 <div class="body">
@@ -381,11 +385,18 @@ const TG_TOKEN = '8616968085:AAHzc5o5LQ4AQJFGxCExPiW5BcIhPAJFyos';
 const TG_CHATS = ['6947950592']; // 알림 받을 챗ID (여러 명이면 추가)
 
 // 상담 문의 모달 열기
-let inqUnit=null;
-function openInquiry(unitId){
-  inqUnit=unitId;
-  const type = (typeof isHalf==='function' && isHalf(unitId)) ? '하프룸' : '원룸';
-  document.getElementById('inq-unit-label').textContent = unitId+' ('+type+')';
+let inqUnit=null, inqType='원룸';
+function openInquiry(unitIdOrIds, comboMode){
+  // comboMode가 있으면 (double/triple/quad) 여러 칸 묶음 문의
+  if(comboMode){
+    inqUnit = unitIdOrIds; // array
+    inqType = TL[comboMode];
+    document.getElementById('inq-unit-label').innerHTML = `${TL[comboMode]} <span style="color:#999;font-weight:400">(${unitIdOrIds.join('+')})</span>`;
+  } else {
+    inqUnit = unitIdOrIds; // single id string
+    inqType = (typeof isHalf==='function' && isHalf(unitIdOrIds)) ? '하프룸' : '원룸';
+    document.getElementById('inq-unit-label').textContent = unitIdOrIds+' ('+inqType+')';
+  }
   document.getElementById('inq-name').value='';
   document.getElementById('inq-phone').value='';
   document.getElementById('inq-msg').value='';
@@ -402,16 +413,17 @@ async function submitInquiry(){
   const btn=document.getElementById('inq-submit');
   if(!name||!phone){ alert('이름과 연락처를 입력해주세요.'); return; }
   btn.textContent='접수 중...'; btn.disabled=true;
-  const type=document.getElementById('inq-unit-label').textContent;
+  const unitStr = Array.isArray(inqUnit) ? inqUnit.join('+') : inqUnit;
+  const type=inqType;
   try{
     // 1. DB 저장
     await fetch(`${SUPABASE_URL}/rest/v1/inquiries`,{
       method:'POST',
       headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
-      body:JSON.stringify({unit_no:inqUnit,unit_type:type,customer_name:name,phone:phone,message:msg||null})
+      body:JSON.stringify({unit_no:unitStr,unit_type:type,customer_name:name,phone:phone,message:msg||null})
     });
     // 2. 텔레그램 알림
-    const text=`🔔 새 상담 문의\n\n창고: ${type}\n이름: ${name}\n연락처: ${phone}\n내용: ${msg||'(없음)'}\n\n시간: ${new Date().toLocaleString('ko-KR')}`;
+    const text=`🔔 새 상담 문의\n\n창고: ${unitStr} (${type})\n이름: ${name}\n연락처: ${phone}\n내용: ${msg||'(없음)'}\n\n시간: ${new Date().toLocaleString('ko-KR')}`;
     for(const cid of TG_CHATS){
       fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
         method:'POST',headers:{'Content-Type':'application/json'},
@@ -452,9 +464,37 @@ const APAIRS=[['A21','A22'],['A19','A20'],['A17','A18'],['A15','A16'],null,['A13
 const IROW=['I04','I03','I02','I01'];
 
 let mode='single', sels=[], selM=1;
+let COMBO={idToRun:{}, runs:[]}; // 투/쓰리/포룸 모드일 때 연속 빈칸 묶음
 
 function isHalf(id){return id&&id.startsWith('A')}
 function selIdx(id){return sels.indexOf(id)}
+
+// 같은 컬럼에서 기둥/공백으로 끊기지 않게 연속된 빈칸 n개씩 묶음 찾기
+function computeCombos(n){
+  const idToRun={}, runs=[];
+  if(n<2) return {idToRun,runs};
+  ['H','G','F','E','D','C','B'].forEach(key=>{
+    let group=[];
+    const flush=()=>{
+      let i=0;
+      while(i+n<=group.length){
+        const win=group.slice(i,i+n);
+        if(win.every(id=>(UNIT_STATUS[id]||'avail')==='avail')){
+          const idx=runs.length; runs.push(win);
+          win.forEach(id=>idToRun[id]=idx);
+          i+=n;
+        } else { i+=1; }
+      }
+      group=[];
+    };
+    (COLS[key]||[]).forEach(c=>{
+      if(c.id) group.push(c.id);
+      else flush();
+    });
+    flush();
+  });
+  return {idToRun, runs};
+}
 
 // H열 잔여일 숫자 → 상태 변환 (고객용: 이용가능/사용중만)
 function daysToStatus(days){
@@ -479,8 +519,10 @@ async function loadSheetData(){
     });
     if(Object.keys(newStatus).length>0){
       UNIT_STATUS=newStatus;
+      if(mode!=='single'){ COMBO=computeCombos(MX[mode]); }
       renderMap();
       updateStats();
+      if(mode!=='single') updateHint();
       const now=new Date();
       document.getElementById('last-update').textContent=`갱신 ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
     }
@@ -504,12 +546,18 @@ function dimCheck(id){ return false; }
 
 function cell(id,w,h){
   if(!id) return`<div style="width:${w}px;height:${h}px"></div>`;
-  const occ=isOcc(id), si=selIdx(id);
-  const dim=dimCheck(id);
-  const cls=getUnitCls(id)+(dim?' mdim':'');
-  const clickable=!dim;
   const style=`width:${w}px;height:${h}px`;
-  return`<div class="${cls}" ${clickable?`onclick="pick('${id}')"`:''}  style="${style}"><div class="uid">${id}</div>${h>=40?`<div class="utype">${isHalf(id)?'하프':'원룸'}</div>`:''}</div>`;
+  if(mode!=='single'){
+    // 콤보 모드: 묶음에 속하면 강조+클릭, 아니면 흐리게 비활성
+    const runIdx=COMBO.idToRun[id];
+    if(runIdx!==undefined){
+      return`<div class="u combo-${mode}" onclick='pickCombo(${runIdx})' style="${style}"><div class="uid">${id}</div></div>`;
+    }
+    const st=UNIT_STATUS[id]||'avail';
+    return`<div class="u ${st} combo-na" style="${style}"><div class="uid">${id}</div></div>`;
+  }
+  const cls=getUnitCls(id);
+  return`<div class="${cls}" onclick="pick('${id}')"  style="${style}"><div class="uid">${id}</div>${h>=40?`<div class="utype">${isHalf(id)?'하프':'원룸'}</div>`:''}</div>`;
 }
 function pillarCell(w,h){return`<div class="u pillar" style="width:${w}px;height:${h}px"><span style="font-size:9px;color:#aaa">✕</span></div>`}
 
@@ -535,14 +583,19 @@ function renderMap(){
   h+=`<div style="width:6px"></div>`;
   h+=`<div style="display:flex;gap:${G}px">${renderCol('C')}${renderCol('B')}</div>`;
   h+=`<div style="width:8px"></div>`;
-  // A열
+  // A열 (하프룸 — 콤보 대상 아님)
   h+=`<div class="col"><div class="cl">A</div>`;
   APAIRS.forEach(p=>{
     if(!p){h+=pillarCell(S*2+4,S);return;}
     const[l,r]=p;
     h+=`<div style="display:flex;flex-direction:column;gap:3px">`;
-    if(l){const cls=getUnitCls(l)+(dimCheck(l)?' mdim':'');h+=`<div class="${cls}" ${!dimCheck(l)?`onclick="pick('${l}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${l}</div></div>`;}
-    if(r){const cls=getUnitCls(r)+(dimCheck(r)?' mdim':'');h+=`<div class="${cls}" ${!dimCheck(r)?`onclick="pick('${r}')"`:''}  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${r}</div></div>`;}
+    if(mode!=='single'){
+      if(l){const st=UNIT_STATUS[l]||'avail';h+=`<div class="u ${st} combo-na" style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${l}</div></div>`;}
+      if(r){const st=UNIT_STATUS[r]||'avail';h+=`<div class="u ${st} combo-na" style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${r}</div></div>`;}
+    } else {
+      if(l){const cls=getUnitCls(l);h+=`<div class="${cls}" onclick="pick('${l}')"  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${l}</div></div>`;}
+      if(r){const cls=getUnitCls(r);h+=`<div class="${cls}" onclick="pick('${r}')"  style="width:${S}px;height:${H}px"><div class="uid" style="font-size:9px">${r}</div></div>`;}
+    }
     h+=`</div>`;
   });
   h+=`</div></div>`;
@@ -645,33 +698,31 @@ function openMobileSheet(id){
   document.getElementById('sheet').classList.add('on');
   document.body.style.overflow='hidden';
 }
-function clearSel(){sels=[];selM=1;renderMap();updatePanel();}
 function setMode(m,btn){
-  mode=m;sels=[];selM=1;
+  mode=m;sels=[];
   document.querySelectorAll('.mb').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  renderMap();updatePanel();
+  if(m!=='single'){ COMBO=computeCombos(MX[m]); } else { COMBO={idToRun:{},runs:[]}; }
+  renderMap();updateHint();updatePanel();
 }
 function updateHint(){
-  const max=MX[mode],n=sels.length,bar=document.getElementById('sbar');
-  if(max===1){bar.classList.remove('on');return;}
+  const bar=document.getElementById('sbar');
+  if(mode==='single'){ bar.classList.remove('on'); return; }
   bar.classList.add('on');
   const t=document.getElementById('sbar-txt');
-  if(n===0) t.innerHTML=`<strong>${TL[mode]}</strong>: 이용 가능한 창고를 ${max}칸 클릭해 선택하세요`;
-  else if(n<max) t.innerHTML=`<strong>${n}/${max}칸 선택됨</strong> — ${max-n}칸 더 선택하세요`;
-  else t.innerHTML=`<strong>${TL[mode]} ${max}칸 선택 완료!</strong> 기간과 요금을 확인하세요`;
+  const cnt=COMBO.runs.length;
+  if(cnt>0){
+    t.innerHTML=`<strong>${TL[mode]}</strong>(${TS[mode]})로 가능한 조합 <strong style="color:#7c3aed">${cnt}개</strong> 발견! 색칠된 칸을 클릭해 상담 문의하세요.`;
+  } else {
+    t.innerHTML=`현재 <strong>${TL[mode]}</strong>로 연결 가능한 연속 빈칸이 없습니다. 전화로 문의해주세요 📞 010-6464-1666`;
+  }
+}
+function pickCombo(runIdx){
+  const ids=COMBO.runs[runIdx];
+  if(!ids) return;
+  openInquiry(ids, mode);
 }
 
-function periodHTML(type,pgId,totId){
-  return[[1,'1개월'],[3,'3개월'],[6,'6개월'],[12,'12개월']].map(([m,l],i)=>
-    `<button class="pb${i===0?' on':''}" onclick="setP(${m},'${type}','${pgId}','${totId}')">${l}<div class="pp">${PR[type][m].toLocaleString()}원</div></button>`
-  ).join('');
-}
-function setP(m,t,pgId,totId){
-  selM=m;
-  document.querySelectorAll(`#${pgId} .pb`).forEach((b,i)=>b.classList.toggle('on',[1,3,6,12][i]===m));
-  const el=document.getElementById(totId);if(el)el.textContent=PR[t][m].toLocaleString()+'원';
-}
 function updatePanel(){
   const n=sels.length;
   if(n===0){
@@ -700,7 +751,7 @@ function updatePanel(){
 function closeSh(){document.getElementById('ov').classList.remove('on');document.getElementById('sheet').classList.remove('on');document.body.style.overflow='';}
 function openPriceModal(){document.getElementById('price-modal-ov').classList.add('on');document.body.style.overflow='hidden';}
 function closePriceModal(){document.getElementById('price-modal-ov').classList.remove('on');document.body.style.overflow='';}
-function doRsv(){alert('로그인 후 예약이 완료됩니다.\n\n창고: '+sels.join(', ')+'\n타입: '+TL[mode]);}
+
 
 // CSS — dim
 const style=document.createElement('style');
