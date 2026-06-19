@@ -103,14 +103,6 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
 .drow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #eef;font-size:12.5px}
 .drow:last-child{border-bottom:none}
 .dk{color:#999}.dv{font-weight:600}
-.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.pb{padding:8px 4px;border-radius:8px;border:1.5px solid #dde;background:#fff;color:#666;font-size:11px;cursor:pointer;text-align:center;transition:all .13s;font-family:'Noto Sans KR',sans-serif}
-.pb.on{border-color:var(--navy);background:var(--navy);color:#fff;font-weight:700}
-.pb .pp{font-size:9px;color:#aaa;margin-top:1px}
-.pb.on .pp{color:rgba(255,255,255,.6)}
-.prow{display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px solid #eef;margin-top:10px}
-.pamt{font-family:'Space Mono',monospace;font-size:17px;font-weight:700;color:var(--navy)}
-.btn-rsv{width:100%;margin-top:10px;padding:12px;background:var(--navy);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif}
 .ni{display:flex;gap:8px;padding:6px 0;font-size:12px;color:#444;line-height:1.5;border-bottom:1px solid #eef}
 .ni:last-child{border-bottom:none}
 .nic{flex-shrink:0;font-size:14px}
@@ -301,12 +293,6 @@ body{background:var(--bg);color:#111;font-family:'Noto Sans KR',sans-serif;min-h
     <div class="pct">선택한 창고</div>
     <div class="pempty" id="pempty"><div class="pe-ico">📦</div><p style="font-size:12px;line-height:1.7">창고를 클릭하면<br>현황을 확인할 수 있습니다</p></div>
     <div id="pdet" style="display:none"></div>
-  </div>
-  <div class="pc" id="pperiod" style="display:none!important">
-    <div class="pct">이용 기간</div>
-    <div class="pgrid" id="dpg"></div>
-    <div class="prow"><span style="font-size:12px;color:#999">총 결제금액</span><span class="pamt" id="dtot">—</span></div>
-    <button class="btn-rsv" onclick="doRsv()">지금 예약하기 →</button>
   </div>
   <div class="pc">
     <div class="pct">창고 타입 안내</div>
