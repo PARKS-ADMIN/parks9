@@ -231,6 +231,7 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
   <nav class="sb-nav">
     <div class="sb-sec">메인</div>
     <div class="sb-item on" onclick="showPage('dashboard',this)"><span class="sb-ic">📊</span>대시보드</div>
+    <div class="sb-item" onclick="showPage('sales',this)"><span class="sb-ic">💰</span>매출 대시보드</div>
     <div class="sb-item" onclick="showPage('floormap',this)"><span class="sb-ic">🗺️</span>창고 배치도</div>
     <div class="sb-sec">운영</div>
     <div class="sb-item" onclick="showPage('inquiries',this)"><span class="sb-ic">💬</span>상담 문의<span class="sb-bdg" id="sb-inq-cnt">0</span></div>
@@ -262,6 +263,7 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
   <div class="content">
     <div class="page-tabs">
       <button class="ptab on" onclick="showPage('dashboard',this)">📊 대시보드</button>
+      <button class="ptab" onclick="showPage('sales',this)">💰 매출</button>
       <button class="ptab" onclick="showPage('floormap',this)">🗺️ 배치도</button>
       <button class="ptab" onclick="showPage('inquiries',this)">💬 문의</button>
       <button class="ptab" onclick="showPage('customers',this)">👤 고객목록</button>
@@ -307,6 +309,35 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
           <div class="ch"><h2>연체 계약</h2><span style="font-size:11.5px;color:var(--red);font-weight:700" id="od-total-label"></span></div>
           <div class="cb" id="od-list" style="max-height:280px;overflow-y:auto"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- 매출 대시보드 -->
+    <div class="page-section" id="page-sales">
+      <div class="kpi-row">
+        <div class="kpi k1"><div class="kl">이번달 신규매출</div><div class="kv" style="color:var(--navy)" id="sv-month-amt">—</div><div class="ks" id="sv-month-cmp">—</div></div>
+        <div class="kpi k2"><div class="kl">이번달 신규계약</div><div class="kv" style="color:var(--green)" id="sv-month-cnt">—</div><div class="ks">건</div></div>
+        <div class="kpi k3"><div class="kl">현재 활성 계약금액</div><div class="kv" style="color:var(--blue)" id="sv-active-total">—</div><div class="ks">사용중 전체 합계</div></div>
+        <div class="kpi k4"><div class="kl">평균 객단가</div><div class="kv" style="color:var(--yellow)" id="sv-avg">—</div><div class="ks">계약당 평균</div></div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><h2>월별 신규 계약 매출 (최근 6개월)</h2></div>
+        <div class="cb" id="sv-bar-chart" style="padding:18px 20px"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:14px">
+        <div class="card">
+          <div class="ch"><h2>월별 점유율 추이 (최근 6개월, 추정)</h2></div>
+          <div class="cb" id="sv-occ-chart" style="padding:18px 20px"></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h2>결제수단별 비중</h2></div>
+          <div class="cb" id="sv-pay-chart" style="padding:18px 20px"></div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);padding:4px 4px 0;line-height:1.6">
+        ※ 매출은 별도 결제내역이 아닌 <strong>계약시작일 기준 계약금액</strong>으로 추정 집계됩니다. 점유율은 계약시작~종료일 구간으로 역산한 추정치입니다.
       </div>
     </div>
 
@@ -880,11 +911,12 @@ function showPage(id, triggerEl) {
   document.querySelectorAll('.ptab,.sb-item').forEach(el=>el.classList.remove('on'));
   document.getElementById('page-'+id).classList.add('on');
   if(triggerEl) triggerEl.classList.add('on');
-  const titles={dashboard:'운영 현황 대시보드',floormap:'창고 배치도',inquiries:'상담 문의',customers:'고객 관리',expiry:'계약 만료 관리',overdue:'연체 관리',ended:'종료 고객 이력'};
+  const titles={dashboard:'운영 현황 대시보드',sales:'매출 대시보드',floormap:'창고 배치도',inquiries:'상담 문의',customers:'고객 관리',expiry:'계약 만료 관리',overdue:'연체 관리',ended:'종료 고객 이력'};
   document.getElementById('tb-ttl').textContent=titles[id]||id;
   if(id==='floormap') setTimeout(()=>renderAdminMap('admin-map2','m2'),50);
   if(id==='ended'&&ENDED_ALL.length===0) loadEndedData();
   if(id==='inquiries') loadInquiries();
+  if(id==='sales') buildSalesDashboard();
   closeSB();
 }
 function toggleSB(){const sb=document.getElementById('sb');const ov=document.getElementById('sb-ov');const o=sb.classList.toggle('open');ov.classList.toggle('on',o);document.body.style.overflow=o?'hidden':'';}
@@ -1057,6 +1089,125 @@ async function endContract(id){
     alert('❌ 처리 실패: '+e.message);
   }
 }
+// ══════════════════════════════════════════════════════
+// 엑셀 내보내기 (현재 DB 전체 → xlsx)
+// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// 매출 대시보드
+// ══════════════════════════════════════════════════════
+function getMonthKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function fmtWon(n){ return Math.round(n).toLocaleString()+'원'; }
+function fmtWonShort(n){
+  if(n>=10000000) return (n/10000000).toFixed(1)+'천만';
+  if(n>=10000) return Math.round(n/10000)+'만';
+  return n.toLocaleString();
+}
+
+function collectContracts(){
+  const list=[];
+  UNITS.forEach(u=>{
+    if(u.status==='avail') return; // 공실은 계약 아님
+    list.push({start:u.start, end:u.end, amount:Number(u.amount)||0, pay:(u.pay&&u.pay.trim())||'미입력'});
+  });
+  ENDED_ALL.forEach(c=>{
+    const amt = Number(String(c.amount||'').replace(/[^0-9.-]/g,''))||0;
+    list.push({start:c.start, end:c.end, amount:amt, pay:(c.pay&&c.pay.trim())||'미입력'});
+  });
+  return list;
+}
+
+async function buildSalesDashboard(){
+  if(ENDED_ALL.length===0){ try{ await loadEndedData(); }catch(e){} }
+  const contracts = collectContracts();
+  const totalUnits = UNITS.length || 1;
+
+  // 최근 6개월 (이번달 포함)
+  const now=new Date();
+  const months=[];
+  for(let i=5;i>=0;i--){ months.push(new Date(now.getFullYear(), now.getMonth()-i, 1)); }
+
+  const monthData = months.map(d=>{
+    const key=getMonthKey(d);
+    const monthStart=new Date(d.getFullYear(),d.getMonth(),1);
+    const monthEnd=new Date(d.getFullYear(),d.getMonth()+1,0,23,59,59);
+    let revenue=0, newCount=0, occCount=0;
+    contracts.forEach(c=>{
+      if(!c.start) return;
+      const cs=new Date(c.start);
+      if(isNaN(cs)) return;
+      if(getMonthKey(cs)===key){ revenue+=c.amount; newCount++; }
+      const ce = c.end ? new Date(c.end) : null;
+      if(cs<=monthEnd && (!ce || isNaN(ce) || ce>=monthStart)) occCount++;
+    });
+    return {key, label:`${d.getMonth()+1}월`, revenue, newCount, occRate: Math.round(occCount/totalUnits*100)};
+  });
+
+  // ── KPI ──
+  const thisMonth = monthData[5], prevMonth = monthData[4];
+  document.getElementById('sv-month-amt').textContent = fmtWonShort(thisMonth.revenue)+'원';
+  if(prevMonth.revenue>0){
+    const diff = Math.round((thisMonth.revenue-prevMonth.revenue)/prevMonth.revenue*100);
+    document.getElementById('sv-month-cmp').innerHTML = diff>=0
+      ? `<span style="color:var(--green)">▲ ${diff}%</span> vs 전월`
+      : `<span style="color:var(--red)">▼ ${Math.abs(diff)}%</span> vs 전월`;
+  } else {
+    document.getElementById('sv-month-cmp').textContent='전월 데이터 없음';
+  }
+  document.getElementById('sv-month-cnt').textContent = thisMonth.newCount+'건';
+
+  const activeUnits = UNITS.filter(u=>u.status!=='avail');
+  const activeTotal = activeUnits.reduce((s,u)=>s+(Number(u.amount)||0),0);
+  document.getElementById('sv-active-total').textContent = fmtWonShort(activeTotal)+'원';
+  document.getElementById('sv-avg').textContent = activeUnits.length>0 ? fmtWonShort(activeTotal/activeUnits.length)+'원' : '—';
+
+  // ── 월별 매출 막대그래프 ──
+  const maxRev = Math.max(...monthData.map(m=>m.revenue), 1);
+  document.getElementById('sv-bar-chart').innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:10px;height:180px;padding:0 4px">
+      ${monthData.map(m=>`
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end">
+          <div style="font-size:10.5px;font-weight:700;color:var(--navy);margin-bottom:4px;white-space:nowrap">${m.revenue>0?fmtWonShort(m.revenue):''}</div>
+          <div style="width:100%;max-width:46px;background:linear-gradient(180deg,#3b4ba0,var(--navy));border-radius:6px 6px 2px 2px;height:${Math.max(m.revenue/maxRev*130,m.revenue>0?6:0)}px;transition:height .3s"></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;font-weight:600">${m.label}</div>
+          <div style="font-size:9.5px;color:#c0c5d8">${m.newCount}건</div>
+        </div>`).join('')}
+    </div>`;
+
+  // ── 점유율 추이 ──
+  const maxOcc = 100;
+  document.getElementById('sv-occ-chart').innerHTML = `
+    <div style="display:flex;align-items:flex-end;gap:10px;height:160px;padding:0 4px">
+      ${monthData.map(m=>`
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end">
+          <div style="font-size:10.5px;font-weight:700;color:#7c3aed;margin-bottom:4px">${m.occRate}%</div>
+          <div style="width:100%;max-width:38px;background:linear-gradient(180deg,#c4b5fd,#7c3aed);border-radius:6px 6px 2px 2px;height:${Math.max(m.occRate/maxOcc*110,4)}px;transition:height .3s"></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:6px;font-weight:600">${m.label}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // ── 결제수단별 비중 ──
+  const payMap={};
+  contracts.forEach(c=>{ if(c.amount>0){ payMap[c.pay]=(payMap[c.pay]||0)+c.amount; } });
+  const payTotal = Object.values(payMap).reduce((a,b)=>a+b,0) || 1;
+  const payColors=['#1a2870','#22c55e','#f59e0b','#a78bfa','#f87171','#38bdf8','#94a3b8'];
+  const payEntries = Object.entries(payMap).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('sv-pay-chart').innerHTML = payEntries.length===0
+    ? `<p style="font-size:12.5px;color:var(--muted);text-align:center;padding:20px 0">결제 데이터가 없습니다</p>`
+    : payEntries.map(([pay,amt],i)=>{
+        const pct = Math.round(amt/payTotal*100);
+        const color = payColors[i%payColors.length];
+        return `<div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px">
+            <span style="font-weight:700;color:#333">${pay}</span>
+            <span style="color:var(--muted)">${pct}% · ${fmtWonShort(amt)}원</span>
+          </div>
+          <div style="background:var(--sur2);border-radius:6px;height:9px;overflow:hidden">
+            <div style="background:${color};height:100%;width:${pct}%;border-radius:6px;transition:width .3s"></div>
+          </div>
+        </div>`;
+      }).join('');
+}
+
 // ══════════════════════════════════════════════════════
 // 엑셀 내보내기 (현재 DB 전체 → xlsx)
 // ══════════════════════════════════════════════════════
