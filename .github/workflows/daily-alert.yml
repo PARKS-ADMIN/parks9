@@ -1,0 +1,55 @@
+name: 만료-연체 알림
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # 매일 01:00 UTC = 10:00 KST
+  workflow_dispatch: {}    # Actions 탭에서 수동 실행(테스트)도 가능
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 만료-연체 확인 후 텔레그램 발송
+        env:
+          SUPABASE_URL: "https://zsiklzhtotlaozuxdumb.supabase.co"
+          SUPABASE_KEY: "sb_publishable_y1jh83wxGBH6Xp0PcIxhwQ_Kr03Ibeb"
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT_IDS: ${{ secrets.TG_CHAT_IDS }}
+        run: |
+          export TZ=Asia/Seoul
+          NL=$'\n'
+          TODAY=$(date +%Y-%m-%d)
+          TODAY_EPOCH=$(date -d "$TODAY" +%s)
+          RESP=$(curl -s "$SUPABASE_URL/rest/v1/warehouses?select=unit_no,customer_name,contract_end,status" -H "apikey: $SUPABASE_KEY" -H "Authorization: Bearer $SUPABASE_KEY")
+          EXPIRING=""
+          OVERDUE=""
+          EXP_COUNT=0
+          OVER_COUNT=0
+          while IFS=$'\t' read -r unit name end; do
+            [ -z "$end" ] && continue
+            END_EPOCH=$(date -d "$end" +%s 2>/dev/null) || continue
+            DIFF=$(( (END_EPOCH - TODAY_EPOCH) / 86400 ))
+            if [ "$DIFF" -lt 0 ]; then
+              OVER_COUNT=$((OVER_COUNT+1))
+              OVERDUE="${OVERDUE}${NL}- ${unit} (${name:-고객}) 연체 $((DIFF*-1))일"
+            elif [ "$DIFF" -le 14 ]; then
+              EXP_COUNT=$((EXP_COUNT+1))
+              EXPIRING="${EXPIRING}${NL}- ${unit} (${name:-고객}) D-${DIFF}"
+            fi
+          done < <(echo "$RESP" | jq -r '.[] | select(.status == "사용중") | select(.contract_end != null) | [.unit_no, (.customer_name // "고객"), .contract_end] | @tsv')
+          if [ "$EXP_COUNT" -eq 0 ] && [ "$OVER_COUNT" -eq 0 ]; then
+            MSG="🌅 [파크스] 오늘의 창고 현황 (${TODAY})${NL}${NL}🟢 만료·연체 건이 없습니다. 좋은 하루 되세요!"
+          else
+            MSG="🌅 [파크스] 오늘의 창고 현황 (${TODAY})"
+            if [ "$EXP_COUNT" -gt 0 ]; then
+              MSG="${MSG}${NL}${NL}⚠️ 만료임박 (14일 이내): ${EXP_COUNT}건${EXPIRING}"
+            fi
+            if [ "$OVER_COUNT" -gt 0 ]; then
+              MSG="${MSG}${NL}${NL}🔴 연체중: ${OVER_COUNT}건${OVERDUE}"
+            fi
+          fi
+          IFS=',' read -ra CHATS <<< "$TG_CHAT_IDS"
+          for CHAT in "${CHATS[@]}"; do
+            PAYLOAD=$(jq -n --arg text "$MSG" --arg chat "$CHAT" '{chat_id:$chat, text:$text}')
+            curl -s -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" -H "Content-Type: application/json" -d "$PAYLOAD"
+          done
