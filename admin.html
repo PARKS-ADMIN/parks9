@@ -76,6 +76,41 @@ async function doLogout(){
   if(sbClient) await sbClient.auth.signOut();
   location.reload();
 }
+// ── 버전 정보 ──
+const APP_VERSION='v2.7';
+const APP_BUILD_DATE='2026-06-21';
+const APP_CHANGELOG=[
+  ['v2.7','2026-06-21','💰 매출 대시보드 추가 (월별 매출·점유율·결제수단 비중)'],
+  ['v2.6','2026-06-21','⏰ 매일 아침 만료·연체 텔레그램 자동알림 (GitHub Actions)'],
+  ['v2.5','2026-06-20','👥 와이프 폰 텔레그램 알림 추가, 전체 코드 점검'],
+  ['v2.4','2026-06-19','💬 상담문의+텔레그램 알림, 투/쓰리/포룸 보기, 종료고객 검색·수정'],
+  ['v2.1','2026-06-19','🔗 Supabase DB 연동(양방향), 관리자 로그인 보안'],
+  ['v1','2026-05-28','🏗️ GitHub Pages 배포, 구글시트 연동 (최초 버전)'],
+];
+function showVersionInfo(){
+  const rows=APP_CHANGELOG.map(([v,d,note])=>
+    `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #eee;font-size:12.5px">
+      <span style="font-family:monospace;font-weight:800;color:var(--navy);min-width:42px">${v}</span>
+      <span style="color:#999;min-width:78px;font-size:11.5px">${d}</span>
+      <span style="color:#333;flex:1">${note}</span>
+    </div>`).join('');
+  const html=`<div style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">
+    <div style="background:#fff;border-radius:14px;padding:22px;width:min(440px,92vw);max-height:80vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3 style="font-size:15px;font-weight:800;color:var(--navy)">파크스 시스템 버전</h3>
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="width:26px;height:26px;border-radius:50%;border:1px solid #eee;background:#f8f9fc;cursor:pointer">✕</button>
+      </div>
+      <div style="background:var(--sur2);border-radius:9px;padding:10px 14px;margin-bottom:14px;font-size:13px">
+        현재 버전: <strong style="color:var(--navy)">${APP_VERSION}</strong> (${APP_BUILD_DATE})
+      </div>
+      <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:4px">변경 이력</div>
+      ${rows}
+    </div>
+  </div>`;
+  const div=document.createElement('div');
+  div.innerHTML=html;
+  document.body.appendChild(div.firstElementChild);
+}
 </script>
 <style>
 :root{
@@ -245,6 +280,7 @@ body{background:var(--bg);font-family:'Noto Sans KR',sans-serif;display:flex;min
   <div class="sb-ft" style="display:flex;flex-direction:column;gap:8px">
     <button onclick="doLogout()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:8px;border-radius:7px;font-size:11px;cursor:pointer;font-family:'Noto Sans KR',sans-serif">🚪 로그아웃</button>
     <span>파크스 관리자 시스템</span>
+    <span id="app-version" onclick="showVersionInfo()" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted">v2.7 · 2026-06-21</span>
   </div>
 </aside>
 
