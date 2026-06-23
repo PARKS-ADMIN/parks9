@@ -2,7 +2,7 @@ name: 만료-연체 알림
 
 on:
   schedule:
-    - cron: '0 1 * * *'   # 매일 01:00 UTC = 10:00 KST
+    - cron: '7 1 * * *'   # 매일 01:07 UTC ≈ 10:07 KST (정각 혼잡 회피)
   workflow_dispatch: {}    # Actions 탭에서 수동 실행(테스트)도 가능
 
 jobs:
