@@ -5,10 +5,16 @@ on:
     - cron: '7 1 * * *'   # 매일 01:07 UTC ≈ 10:07 KST (정각 혼잡 회피)
   workflow_dispatch: {}    # Actions 탭에서 수동 실행(테스트)도 가능
 
+permissions:
+  contents: write          # keepalive 커밋을 위해 저장소 쓰기 권한 부여
+
 jobs:
   notify:
     runs-on: ubuntu-latest
     steps:
+      - name: 저장소 가져오기
+        uses: actions/checkout@v4
+
       - name: 만료-연체 확인 후 텔레그램 발송
         env:
           SUPABASE_URL: "https://zsiklzhtotlaozuxdumb.supabase.co"
@@ -53,3 +59,19 @@ jobs:
             PAYLOAD=$(jq -n --arg text "$MSG" --arg chat "$CHAT" '{chat_id:$chat, text:$text}')
             curl -s -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" -H "Content-Type: application/json" -d "$PAYLOAD"
           done
+
+      - name: 자동 유지 (워크플로 비활성화 방지)
+        run: |
+          export TZ=Asia/Seoul
+          mkdir -p .github
+          echo "마지막 자동실행: $(date '+%Y-%m-%d %H:%M KST')" > .github/last-run.txt
+          git config user.name "parks9-bot"
+          git config user.email "actions@github.com"
+          git add .github/last-run.txt
+          # 매주 월요일에만 커밋 (매일 커밋하면 지저분해지므로)
+          if [ "$(date +%u)" = "1" ]; then
+            git commit -m "keepalive: $(date '+%Y-%m-%d')" || echo "변경 없음"
+            git push || echo "push 생략"
+          else
+            echo "오늘은 커밋 안 함 (월요일만 커밋)"
+          fi
